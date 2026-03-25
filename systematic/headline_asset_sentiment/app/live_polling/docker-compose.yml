@@ -1,0 +1,45 @@
+services:
+  poller:
+    build: ./poller
+    env_file: .env
+    volumes:
+      - db_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sqlite3, os; sqlite3.connect(os.getenv('DB_PATH', '/data/headline_sentiment.db')).execute('SELECT 1')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  api:
+    build: ./api
+    env_file: .env
+    volumes:
+      - db_data:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      poller:
+        condition: service_started
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  dashboard:
+    build: ./dashboard
+    env_file: .env
+    ports:
+      - "8050:8050"
+    depends_on:
+      api:
+        condition: service_started
+    restart: always
+
+volumes:
+  db_data:
+    driver: local
