@@ -5,6 +5,8 @@ A production-ready Python application that continuously polls the [Permutable AI
 This application productionises the workflow demonstrated in the companion notebook:
 [`notebooks/live/headline_sentiment_polling.ipynb`](../../notebooks/live/headline_sentiment_polling.ipynb)
 
+> **Disclaimer:** This application is provided for informational and research purposes only. Nothing in this application constitutes financial advice or a recommendation to buy, sell, or hold any asset. Sentiment data and indicators surfaced here reflect aggregated model outputs and should not be used as the sole basis for any investment decision.
+
 ![Dashboard screenshot](./dashboard.png)
 
 ---
