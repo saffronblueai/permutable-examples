@@ -7,14 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from db import get_db
-from models import ConvictionPoint, HealthResponse, IndexRecord, TickerConviction
-from signals import compute_conviction
+from models import SentimentPoint, HealthResponse, IndexRecord, TickerSentiment
+from signals import compute_sentiment_avg
 
 app = FastAPI(
     title="Permutable AI  |  Headline Index API",
     description=(
         "Internal API exposing live pre-aggregated headline sentiment index data "
-        "and derived conviction indicators from the Permutable AI index feed. "
+        "and derived average sentiment indicators from the Permutable AI index feed. "
         "All data is sourced from the local SQLite database, which is continuously "
         "populated by the poller service."
     ),
@@ -75,16 +75,16 @@ def get_index(
     return [dict(r) for r in rows]
 
 
-# ── Conviction indicators ──────────────────────────────────────────────────────
+# ── Sentiment indicators ────────────────────────────────────────────────────────
 
-@app.get("/conviction/latest", response_model=list[TickerConviction], tags=["Conviction"])
-def get_latest_conviction(
-    hours: int = Query(12, ge=1, le=48, description="Lookback window for conviction computation"),
+@app.get("/sentiment/latest", response_model=list[TickerSentiment], tags=["Sentiment"])
+def get_latest_sentiment(
+    hours: int = Query(12, ge=1, le=48, description="Lookback window for sentiment computation"),
 ):
     """
-    Return the latest conviction indicator for every ticker in the database.
+    Return the latest average sentiment indicator for every ticker in the database.
 
-    Conviction ratio = sentiment_sum / sentiment_abs_sum ∈ [−1, +1].
+    Average sentiment = sentiment_sum / headline_count ∈ [−1, +1].
     A 5-period rolling mean is applied before thresholding to HIGH / NEUTRAL / LOW.
     """
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
@@ -101,18 +101,18 @@ def get_latest_conviction(
     if df.empty:
         return []
 
-    agg = compute_conviction(df)
+    agg = compute_sentiment_avg(df)
     now = datetime.now(timezone.utc)
     result = []
 
     for ticker, grp in agg.groupby("ticker"):
         last = grp.sort_values("publication_time").iloc[-1]
         result.append(
-            TickerConviction(
+            TickerSentiment(
                 ticker=str(ticker),
                 publication_time=last["publication_time"],
-                conviction_ratio=round(float(last["conviction_ratio"]), 4),
-                conviction_smooth=round(float(last["conviction_smooth"]), 4),
+                sentiment_avg=round(float(last["sentiment_avg"]), 4),
+                sentiment_smooth=round(float(last["sentiment_smooth"]), 4),
                 headline_count=int(last["headline_count"]),
                 indicator=last["indicator"],
                 computed_at=now,
@@ -122,13 +122,13 @@ def get_latest_conviction(
     return sorted(result, key=lambda c: c.ticker)
 
 
-@app.get("/conviction/history", response_model=list[ConvictionPoint], tags=["Conviction"])
-def get_conviction_history(
+@app.get("/sentiment/history", response_model=list[SentimentPoint], tags=["Sentiment"])
+def get_sentiment_history(
     ticker: Optional[str] = Query(None, description="Filter by ticker symbol"),
     hours: int = Query(168, ge=1, le=2160, description="Lookback window in hours (default 7 days)"),
 ):
     """
-    Return the full hourly conviction time series for one or all tickers.
+    Return the full hourly average sentiment time series for one or all tickers.
 
     Suitable for chart rendering. Use `hours` to control the window —
     e.g. `hours=168` for 7 days of data (matching the default backfill).
@@ -149,14 +149,14 @@ def get_conviction_history(
     if df.empty:
         return []
 
-    agg = compute_conviction(df)
+    agg = compute_sentiment_avg(df)
 
     return [
-        ConvictionPoint(
+        SentimentPoint(
             ticker=str(row.ticker),
             publication_time=row.publication_time,
-            conviction_ratio=round(float(row.conviction_ratio), 4),
-            conviction_smooth=round(float(row.conviction_smooth), 4),
+            sentiment_avg=round(float(row.sentiment_avg), 4),
+            sentiment_smooth=round(float(row.sentiment_smooth), 4),
             headline_count=int(row.headline_count),
             indicator=row.indicator,
         )

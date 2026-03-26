@@ -6,9 +6,9 @@ class Settings(BaseSettings):
 
     db_path: str = "/data/headline_index.db"
 
-    # Conviction thresholds — conviction_ratio = sentiment_sum / sentiment_abs_sum ∈ [−1, +1]
-    upper_threshold: float = 0.7
-    lower_threshold: float = -0.7
+    # Sentiment thresholds — sentiment_avg = sentiment_sum / headline_count ∈ [−1, +1]
+    upper_threshold: float = 0.5
+    lower_threshold: float = -0.5
 
 
 settings = Settings()

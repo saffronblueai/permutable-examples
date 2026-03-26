@@ -15,21 +15,21 @@ class IndexRecord(BaseModel):
     sentiment_std: float | None = None
 
 
-class TickerConviction(BaseModel):
+class TickerSentiment(BaseModel):
     ticker: str
     publication_time: datetime
-    conviction_ratio: float
-    conviction_smooth: float
+    sentiment_avg: float
+    sentiment_smooth: float
     headline_count: int
     indicator: Literal["HIGH", "NEUTRAL", "LOW"]
     computed_at: datetime
 
 
-class ConvictionPoint(BaseModel):
+class SentimentPoint(BaseModel):
     ticker: str
     publication_time: datetime
-    conviction_ratio: float
-    conviction_smooth: float
+    sentiment_avg: float
+    sentiment_smooth: float
     headline_count: int
     indicator: Literal["HIGH", "NEUTRAL", "LOW"]
 

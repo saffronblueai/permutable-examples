@@ -1,6 +1,8 @@
 # Live Regional Macro Sentiment Polling Application
 
-A production-ready example application that continuously polls the **Permutable AI Regional Macro Sentiment Index API** and displays an interactive monitoring dashboard with a live world map choropleth and per-country sentiment analysis.
+An example application that continuously polls the **Permutable AI Regional Macro Sentiment Index API** and displays an interactive monitoring dashboard with a live world map choropleth and per-country sentiment analysis.
+
+> **This is a reference example, not a production template.** It is intended to illustrate the integration pattern and give you a working starting point. You should review, adapt, and harden it — including storage, authentication, error handling, and deployment — before using it in any real environment.
 
 > **Disclaimer:** This application is provided for informational and research purposes only. Nothing it produces constitutes financial advice or a recommendation to buy, sell, or hold any asset. Sentiment indicators derived here reflect aggregated model outputs and should not be used as the sole basis for any investment decision.
 
@@ -199,19 +201,15 @@ Two filter bars sit above the charts. Filters on the map bar apply only to the w
 
 ---
 
-## Deployment Notes
+## Notes
 
 ### Persistent storage
 
 The SQLite database is stored in a named Docker volume (`db_data`). It persists across `docker compose down` and `docker compose up` restarts. On restart the poller resumes from the latest stored record **per index type**, avoiding redundant API calls.
 
-### Cloud deployment
+### Going further
 
-For production deployments, consider replacing SQLite with a managed database (PostgreSQL, RDS, etc.) and running the poller as a scheduled task (e.g. AWS ECS, Cloud Run, Kubernetes CronJob). The `poller/fetcher.py` and `poller/db.py` files are the only files that need updating to switch database backends.
-
-### Scaling
-
-The `api` and `dashboard` services are stateless and can be scaled horizontally. The `poller` should run as a single instance to avoid duplicate writes.
+If you want to extend this example beyond local use, `poller/fetcher.py` and `poller/db.py` are the only files that need updating to switch to a different database backend (e.g. PostgreSQL). The `api` and `dashboard` services are stateless, and the `poller` should run as a single instance to avoid duplicate writes.
 
 ---
 

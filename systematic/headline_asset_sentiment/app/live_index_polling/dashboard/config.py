@@ -13,8 +13,8 @@ class Settings(BaseSettings):
         validation_alias="TICKERS",
     )
 
-    upper_threshold: float = 0.7
-    lower_threshold: float = -0.7
+    upper_threshold: float = 0.5
+    lower_threshold: float = -0.5
 
     @computed_field  # type: ignore[misc]
     @property
