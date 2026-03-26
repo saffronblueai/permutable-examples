@@ -4,19 +4,19 @@ from typing import Literal
 from pydantic import BaseModel
 
 
-class IndexRecord(BaseModel):
-    ticker: str
+class RegionalRecord(BaseModel):
     publication_time: datetime
     topic_name: str
+    country: str
     index_type: str | None = None
     headline_count: int | None = None
+    sentiment_avg: float | None = None
     sentiment_sum: float | None = None
-    sentiment_abs_sum: float | None = None
     sentiment_std: float | None = None
 
 
-class TickerSentiment(BaseModel):
-    ticker: str
+class CountrySentiment(BaseModel):
+    country: str
     publication_time: datetime
     sentiment_avg: float
     sentiment_smooth: float
@@ -26,7 +26,7 @@ class TickerSentiment(BaseModel):
 
 
 class SentimentPoint(BaseModel):
-    ticker: str
+    country: str
     publication_time: datetime
     sentiment_avg: float
     sentiment_smooth: float

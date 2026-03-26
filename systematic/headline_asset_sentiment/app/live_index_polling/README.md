@@ -1,11 +1,15 @@
 # Headline Index Live Polling Application
 
-A production-ready Python application that continuously polls the [Permutable AI](https://permutable.ai) pre-aggregated headline sentiment index API, stores results in a local database, and exposes the data through a FastAPI service and a Plotly Dash monitoring dashboard.
+An example Python application that continuously polls the [Permutable AI](https://permutable.ai) pre-aggregated headline sentiment index API, stores results in a local database, and exposes the data through a FastAPI service and a Plotly Dash monitoring dashboard.
 
-This application productionises the workflow demonstrated in the companion notebook:
+> **This is a reference example, not a production template.** It is intended to illustrate the integration pattern and give you a working starting point. You should review, adapt, and harden it — including storage, authentication, error handling, and deployment — before using it in any real environment.
+
+This application demonstrates an extended version of the workflow in the companion notebook:
 [`notebooks/live/index_sentiment_polling.ipynb`](../../notebooks/live/index_sentiment_polling.ipynb)
 
 > **Disclaimer:** This application is provided for informational and research purposes only. Nothing in this application constitutes financial advice or a recommendation to buy, sell, or hold any asset. Sentiment data and indicators surfaced here reflect aggregated model outputs and should not be used as the sole basis for any investment decision.
+
+![Dashboard screenshot](./dashboard.png)
 
 ---
 
@@ -33,7 +37,7 @@ flowchart TD
 | Service     | Role                                                                         | Port |
 |-------------|------------------------------------------------------------------------------|------|
 | `poller`    | Backfills historical index data on startup, then polls live data every 15 min | —    |
-| `api`       | FastAPI — serves index records and conviction indicators                      | 8000 |
+| `api`       | FastAPI — serves index records and average sentiment indicators               | 8000 |
 | `dashboard` | Plotly Dash — monitoring dashboard, auto-refreshes every 60 s                | 8050 |
 
 ### Headline Index vs Raw Feed
@@ -116,8 +120,8 @@ All configuration is managed through environment variables in `.env`. Every serv
 | `POLL_INTERVAL_SECONDS`  | `900`                                   | Seconds between live polls (default = 15 min)        |
 | `BACKFILL_DAYS`          | `7`                                     | Days of history to fetch on startup                  |
 | `DB_PATH`                | `/data/headline_index.db`               | SQLite file path inside containers                   |
-| `UPPER_THRESHOLD`        | `0.7`                                   | Conviction ratio above this → HIGH indicator         |
-| `LOWER_THRESHOLD`        | `-0.7`                                  | Conviction ratio below this → LOW indicator          |
+| `UPPER_THRESHOLD`        | `0.5`                                   | Average sentiment above this → HIGH indicator        |
+| `LOWER_THRESHOLD`        | `-0.5`                                  | Average sentiment below this → LOW indicator         |
 | `API_URL`                | `http://api:8000`                       | Dashboard → API address (use container service name) |
 | `REFRESH_INTERVAL_MS`    | `60000`                                 | Dashboard auto-refresh interval in milliseconds      |
 
@@ -145,17 +149,17 @@ FastAPI application. Read-only access to the database — the poller is the sole
 |--------|-------------------------|-----------------------------------------------------------------------------|
 | `GET`  | `/health`               | Service status and database row count                                       |
 | `GET`  | `/index`                | Raw index records; params: `ticker`, `hours` (default 24), `limit`         |
-| `GET`  | `/conviction/latest`    | Latest conviction indicator per ticker (HIGH / NEUTRAL / LOW)              |
-| `GET`  | `/conviction/history`   | Full hourly conviction time series; params: `ticker`, `hours` (default 168) |
+| `GET`  | `/sentiment/latest`     | Latest average sentiment indicator per ticker (HIGH / NEUTRAL / LOW)       |
+| `GET`  | `/sentiment/history`    | Full hourly average sentiment time series; params: `ticker`, `hours` (default 168) |
 
 Swagger UI is available at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-### Conviction Ratio
+### Average Sentiment
 
-The conviction ratio is the primary derived metric:
+Average sentiment is the primary derived metric:
 
 ```
-conviction_ratio = sentiment_sum / sentiment_abs_sum   ∈ [−1, +1]
+sentiment_avg = sentiment_sum / headline_count   ∈ [−1, +1]
 ```
 
 - **+1** — all headlines in the bucket were strongly positive
@@ -166,9 +170,9 @@ The API applies a **5-hour rolling mean** before thresholding. Indicators:
 
 | Indicator | Condition |
 |-----------|-----------|
-| `HIGH`    | `conviction_smooth ≥ UPPER_THRESHOLD` (default 0.7)  |
-| `NEUTRAL` | Between thresholds                                    |
-| `LOW`     | `conviction_smooth ≤ LOWER_THRESHOLD` (default −0.7) |
+| `HIGH`    | `sentiment_smooth ≥ UPPER_THRESHOLD` (default 0.5)  |
+| `NEUTRAL` | Between thresholds                                   |
+| `LOW`     | `sentiment_smooth ≤ LOWER_THRESHOLD` (default −0.5) |
 
 ### Dashboard
 
@@ -178,12 +182,12 @@ A **ticker dropdown** in the header (defaulting to "All tickers") filters every 
 
 **Charts displayed:**
 
-- **Stat cards** — total index records (7 d), mean conviction ratio, total headlines, HIGH/LOW ticker counts
-- **5h Rolling Conviction Ratio** — raw + smoothed line per ticker with threshold bands
+- **Stat cards** — total index records (7 d), mean average sentiment, total headlines, HIGH/LOW ticker counts
+- **5h Rolling Avg Sentiment** — raw + smoothed line per ticker with threshold bands
 - **Hourly Headline Count** — stacked bar chart showing news flow volume
-- **Conviction Heatmap** — red → green heatmap across all hours, date ticks at day boundaries
-- **Conviction Indicator Heatmap** — HIGH / NEUTRAL / LOW colour blocks per hour and ticker
-- **Mean Conviction by Topic** — horizontal bar chart (top 15 topics by headline volume)
+- **Avg Sentiment Heatmap** — red → green heatmap across all hours, date ticks at day boundaries
+- **Sentiment Indicator Heatmap** — HIGH / NEUTRAL / LOW colour blocks per hour and ticker
+- **Mean Avg Sentiment by Topic** — horizontal bar chart (top 15 topics by headline volume)
 
 ---
 
@@ -196,11 +200,11 @@ curl http://localhost:8000/health
 # Last 2 hours of index data for BTC
 curl "http://localhost:8000/index?ticker=BTC_CRY&hours=2"
 
-# Latest conviction indicator for all tickers
-curl http://localhost:8000/conviction/latest
+# Latest average sentiment indicator for all tickers
+curl http://localhost:8000/sentiment/latest
 
-# 7-day conviction history for EUR_IND
-curl "http://localhost:8000/conviction/history?ticker=EUR_IND&hours=168"
+# 7-day average sentiment history for EUR_IND
+curl "http://localhost:8000/sentiment/history?ticker=EUR_IND&hours=168"
 ```
 
 ---
@@ -211,17 +215,19 @@ curl "http://localhost:8000/conviction/history?ticker=EUR_IND&hours=168"
 
 **Widening the backfill window:** Increase `BACKFILL_DAYS` (max 90 days supported by the API). Delete the database volume first if you want a clean backfill: `docker compose down -v && docker compose up`.
 
-**Adjusting conviction thresholds:** Update `UPPER_THRESHOLD` and `LOWER_THRESHOLD` in `.env`. Restart the API and dashboard services.
+**Adjusting sentiment thresholds:** Update `UPPER_THRESHOLD` and `LOWER_THRESHOLD` in `.env`. Restart the API and dashboard services.
 
 **Adding new API endpoints:** Edit `api/main.py` and add routes.
 
 ---
 
-## Deployment Options
+## Going Further
 
-### EC2 / Single VM (Simplest)
+The sections below outline ways you might extend this example for your own use. They are reference starting points only — they are not hardened for production use and should be treated as illustrative rather than prescriptive.
 
-Copy the repository to your server and run the same `docker compose up -d` command.
+### EC2 / Single VM
+
+Copy the repository to a server and run the same `docker compose up -d` command.
 
 ```bash
 git clone <repo>
@@ -314,6 +320,8 @@ with DAG(
 
 ### Database Upgrade: SQLite → PostgreSQL
 
+If you need a more durable store, only `db.py` in each service needs updating to switch backends.
+
 Only `db.py` in each service needs updating. Replace `INSERT OR REPLACE` (SQLite) with:
 
 ```sql
@@ -349,7 +357,7 @@ live_index_polling/
 │   ├── config.py
 │   ├── db.py                 # Read-only SQLite connection
 │   ├── models.py             # Pydantic response schemas
-│   ├── signals.py            # compute_conviction() — rolling conviction ratio
+│   ├── signals.py            # compute_sentiment_avg() — rolling average sentiment
 │   └── main.py               # FastAPI app
 │
 └── dashboard/

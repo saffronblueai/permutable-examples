@@ -1,8 +1,10 @@
 # Headline Sentiment Live Polling Application
 
-A production-ready Python application that continuously polls the [Permutable AI](https://permutable.ai) headline sentiment API, stores results in a local database, and exposes the data through a FastAPI service and a Plotly Dash monitoring dashboard.
+An example Python application that continuously polls the [Permutable AI](https://permutable.ai) headline sentiment API, stores results in a local database, and exposes the data through a FastAPI service and a Plotly Dash monitoring dashboard.
 
-This application productionises the workflow demonstrated in the companion notebook:
+> **This is a reference example, not a production template.** It is intended to illustrate the integration pattern and give you a working starting point. You should review, adapt, and harden it — including storage, authentication, error handling, and deployment — before using it in any real environment.
+
+This application demonstrates an extended version of the workflow in the companion notebook:
 [`notebooks/live/headline_sentiment_polling.ipynb`](../../notebooks/live/headline_sentiment_polling.ipynb)
 
 > **Disclaimer:** This application is provided for informational and research purposes only. Nothing in this application constitutes financial advice or a recommendation to buy, sell, or hold any asset. Sentiment data and indicators surfaced here reflect aggregated model outputs and should not be used as the sole basis for any investment decision.
@@ -53,7 +55,7 @@ flowchart TD
 ```bash
 # 1. Clone and navigate to the app directory
 git clone https://github.com/permutable-ai/permutable-examples.git
-cd permutable-examples/systematic/headline_asset_sentiment/app/live_polling
+cd permutable-examples/systematic/headline_asset_sentiment/app/live_headline_polling
 
 # 2. Create your .env file
 cp .env.example .env
@@ -184,11 +186,13 @@ curl "http://localhost:8000/headlines?hours=168&limit=10000"
 
 ---
 
-## Deployment Options
+## Going Further
 
-### EC2 / Single VM (Simplest)
+The sections below outline ways you might extend this example for your own use. They are reference starting points only — they are not hardened for production use and should be treated as illustrative rather than prescriptive.
 
-Copy the repository to your server and run the same `docker compose up -d` command. Suitable for light workloads and internal tooling.
+### EC2 / Single VM
+
+Copy the repository to a server and run the same `docker compose up -d` command.
 
 ```bash
 # On the server
@@ -203,8 +207,6 @@ Configure a reverse proxy (nginx / Caddy) to expose the API and dashboard over H
 ---
 
 ### AWS ECS + Fargate
-
-For managed container hosting with no servers to maintain.
 
 **Push images to ECR:**
 
@@ -234,7 +236,7 @@ docker push <account-id>.dkr.ecr.<region>.amazonaws.com/permutable-poller:latest
 
 **Shared storage:**
 - Mount an **EFS volume** at `/data` across all task definitions — SQLite behaves correctly on EFS for single-writer workloads.
-- For production durability, see the [Database Upgrade](#database-upgrade-sqlite--postgresql) section below.
+- For a more durable storage option, see the [Database Upgrade](#database-upgrade-sqlite--postgresql) section below.
 
 **Environment variables:** Store secrets (e.g. `API_KEY`) in **AWS Secrets Manager** and inject via ECS Task Definition secrets.
 
@@ -314,7 +316,7 @@ with DAG(
 
 ### Database Upgrade: SQLite → PostgreSQL
 
-The application is designed to make this migration straightforward — only `db.py` in each service needs updating.
+If you need a more durable store, only `db.py` in each service needs updating to switch backends.
 
 **Step 1:** Provision a PostgreSQL instance (e.g. **AWS RDS**, **Cloud SQL**, or a self-hosted container).
 
@@ -401,7 +403,7 @@ The poller runs the historical backfill before starting the live loop. Wait for 
 Check that your `TICKERS` values are valid ticker symbols included in your licence. Refer to the Permutable AI documentation for valid preset names (`TOPIC_PRESET`, `SOURCE_PRESET`, etc.).
 
 **SQLite database locked**
-The poller is the sole writer. If you see lock errors, ensure only one poller instance is running. When scaling the API horizontally, all replicas use the `?mode=ro` read-only URI so they never contend with the writer.
+The poller is the sole writer. If you see lock errors, ensure only one poller instance is running. Multiple API replicas can use the `?mode=ro` read-only URI so they never contend with the writer.
 
 **Port conflicts**
 If 8000 or 8050 are in use on your host, change the host-side port mappings in `docker-compose.yml`:
