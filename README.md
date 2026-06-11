@@ -15,6 +15,7 @@ This repository provides end-to-end reference material — from single-file Jupy
 - [Examples](#examples)
   - [Headline Asset Sentiment](#headline-asset-sentiment)
   - [Regional Macro Sentiment](#regional-macro-sentiment)
+  - [Global Macro Sentiment Indices](#global-macro-sentiment-indices)
 - [Getting Started](#getting-started)
 - [Prerequisites](#prerequisites)
 - [API Access](#api-access)
@@ -26,7 +27,8 @@ This repository provides end-to-end reference material — from single-file Jupy
 | Product | Description | API Endpoint Prefix |
 |---|---|---|
 | **Headline Asset Sentiment** | Per-headline and pre-aggregated hourly sentiment scores for assets, by topic and match type | `/v1/headlines/` |
-| **Regional Macro Sentiment** | Pre-aggregated hourly macro-geopolitical sentiment indices by country, topic, and index type | `/v1/regional-macro/` |
+| **Regional Macro Sentiment** | Pre-aggregated hourly macro-geopolitical sentiment indices by country, topic, and index type | `/v1/headlines/index/macro/` |
+| **Global Macro Sentiment Indices (GMSI)** | Per-headline and hourly aggregated macro sentiment for 95 countries and 70 topics, with independent directional and semantic sentiment scores | `/v1/headlines/feed/gmsi/`, `/v1/headlines/index/gmsi/` |
 
 ---
 
@@ -42,11 +44,17 @@ permutable-examples/
     │   └── notebooks/
     │       ├── live/                    # Live polling integration guides
     │       └── backtesting/             # Signal research and backtesting
-    └── regional_macro_sentiment/
+    ├── regional_macro_sentiment/
+    │   ├── app/
+    │   │   └── live_index_polling/      # Production app — regional macro index feed
+    │   └── notebooks/
+    │       └── backtesting/             # FX cross-country signal research
+    └── global_macro_sentiment/
         ├── app/
-        │   └── live_index_polling/      # Production app — regional macro index feed
+        │   ├── live_headline_polling/   # Production app — GMSI raw headline feed
+        │   └── live_index_polling/      # Production app — GMSI hourly index feed
         └── notebooks/
-            └── backtesting/             # FX cross-country signal research
+            └── live/                    # Live polling integration guides
 ```
 
 ---
@@ -116,6 +124,60 @@ Sentiment series
 ```
 
 **Outputs:** Three ranked summary tables — overall ticker grade, top sentiment driver per ticker, and top sentiment group per ticker — with regime breakdowns (BOTH / UP / DOWN) across 7d, 1m, and 3m return horizons.
+
+---
+
+### Global Macro Sentiment Indices
+
+GMSI is the next-generation macro sentiment product covering **95 countries** and **70 topics** across 8 macro pillars. It uniquely provides two independent sentiment scores per headline:
+
+| Score | What it measures |
+|---|---|
+| **Directional** | Topic-specific economic direction (e.g. +1 = inflation rising, −1 = inflation falling) |
+| **Semantic** | General language tone (+1 = upbeat/optimistic, −1 = alarming/pessimistic) |
+
+The divergence between the two scores is a distinct signal: surging inflation reported in alarming language is directionally positive but semantically negative.
+
+
+#### Live Polling Notebooks
+
+| Notebook | Endpoint Used | Description |
+|---|---|---|
+| [`gmsi_headline_polling.ipynb`](systematic/global_macro_sentiment/notebooks/live/gmsi_headline_polling.ipynb) | Raw feed `/v1/headlines/feed/live/gmsi/{country}` | Polls per-headline GMSI data; compares directional and semantic scores; derives a rolling directional indicator |
+| [`gmsi_index_polling.ipynb`](systematic/global_macro_sentiment/notebooks/live/gmsi_index_polling.ipynb) | Hourly index `/v1/headlines/index/gmsi/live/{country}` | Polls the pre-aggregated hourly GMSI index; derives `sentiment_avg` and `activity_weighted`; compares directional vs semantic divergence |
+
+Both notebooks follow the same structure as the headline asset sentiment notebooks:
+
+1. Authenticate with the API
+2. Dry-run a single poll to validate connectivity and inspect the schema
+3. Persist results to a local SQLite database
+4. Run a 7-day historical backfill for populated example charts
+5. Optionally run the live polling loop (15-min interval)
+6. Visualise the accumulated window
+
+#### Live Polling Applications
+
+| Application | Feed Type | README |
+|---|---|---|
+| [`live_headline_polling`](systematic/global_macro_sentiment/app/live_headline_polling/) | Per-headline raw feed (directional + semantic scores) | [README](systematic/global_macro_sentiment/app/live_headline_polling/README.md) |
+| [`live_index_polling`](systematic/global_macro_sentiment/app/live_index_polling/) | Pre-aggregated hourly index (both sentiment types) | [README](systematic/global_macro_sentiment/app/live_index_polling/README.md) |
+
+Both apps use the same three-service Docker architecture as the other products (`poller` / `api` / `dashboard`):
+
+```bash
+cd systematic/global_macro_sentiment/app/live_index_polling
+cp .env.example .env  # set API_KEY, COUNTRIES, TOPICS
+docker compose up --build
+```
+
+**Key GMSI-specific configuration:**
+
+| Variable | Description |
+|---|---|
+| `COUNTRIES` | Comma-separated ISO-2 codes (default examples use `US,JP,IT,GB,FR,DE,CA`) — see `GET /v1/countries` |
+| `TOPICS` | Comma-separated full topic names (default examples use four high-volume macro topics) — see `GET /v1/headlines/topics/gmsi` |
+| `SENTIMENT_TYPES` | `directional,semantic_sentiment` — both are stored and shown by default |
+| `INDEX_TYPES` | `COMBINED`, `DOMESTIC`, or `INTERNATIONAL` |
 
 ---
 
