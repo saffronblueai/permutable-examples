@@ -16,6 +16,7 @@ This repository provides end-to-end reference material — from single-file Jupy
   - [Headline Asset Sentiment](#headline-asset-sentiment)
   - [Regional Macro Sentiment](#regional-macro-sentiment)
   - [Global Macro Sentiment Indices](#global-macro-sentiment-indices)
+  - [Global Commodity Sentiment Indices](#global-commodity-sentiment-indices)
 - [Getting Started](#getting-started)
 - [Prerequisites](#prerequisites)
 - [API Access](#api-access)
@@ -29,6 +30,7 @@ This repository provides end-to-end reference material — from single-file Jupy
 | **Headline Asset Sentiment** | Per-headline and pre-aggregated hourly sentiment scores for assets, by topic and match type | `/v1/headlines/` |
 | **Regional Macro Sentiment** | Pre-aggregated hourly macro-geopolitical sentiment indices by country, topic, and index type | `/v1/headlines/index/macro/` |
 | **Global Macro Sentiment Indices (GMSI)** | Per-headline and hourly aggregated macro sentiment for 95 countries and 70 topics, with independent directional and semantic sentiment scores | `/v1/headlines/feed/gmsi/`, `/v1/headlines/index/gmsi/` |
+| **Global Commodity Sentiment Indices (GCSI)** | Per-headline and hourly aggregated sentiment for 84 commodities in six sectors, by topic and match type, with short-, medium- and long-term horizon scores | `/v1/headlines/feed/live/gcsi`, `/v1/headlines/feed/historical/gcsi`, `/v1/headlines/index/gcsi/live`, `/v1/headlines/index/gcsi/historical` |
 
 ---
 
@@ -36,25 +38,35 @@ This repository provides end-to-end reference material — from single-file Jupy
 
 ```
 permutable-examples/
-└── systematic/
-    ├── headline_asset_sentiment/
-    │   ├── app/
-    │   │   ├── live_headline_polling/   # Production app — raw headline feed
-    │   │   └── live_index_polling/      # Production app — pre-aggregated index feed
-    │   └── notebooks/
-    │       ├── live/                    # Live polling integration guides
-    │       └── backtesting/             # Signal research and backtesting
-    ├── regional_macro_sentiment/
-    │   ├── app/
-    │   │   └── live_index_polling/      # Production app — regional macro index feed
-    │   └── notebooks/
-    │       └── backtesting/             # FX cross-country signal research
-    └── global_macro_sentiment/
-        ├── app/
-        │   ├── live_headline_polling/   # Production app — GMSI raw headline feed
-        │   └── live_index_polling/      # Production app — GMSI hourly index feed
-        └── notebooks/
-            └── live/                    # Live polling integration guides
+├── systematic/
+│   ├── headline_asset_sentiment/
+│   │   ├── app/
+│   │   │   ├── live_headline_polling/   # Production app — raw headline feed
+│   │   │   └── live_index_polling/      # Production app — pre-aggregated index feed
+│   │   └── notebooks/
+│   │       ├── live/                    # Live polling integration guides
+│   │       └── backtesting/             # Signal research and backtesting
+│   ├── regional_macro_sentiment/
+│   │   ├── app/
+│   │   │   └── live_index_polling/      # Production app — regional macro index feed
+│   │   └── notebooks/
+│   │       └── backtesting/             # FX cross-country signal research
+│   ├── global_macro_sentiment/
+│   │   ├── app/
+│   │   │   ├── live_headline_polling/   # Production app — GMSI raw headline feed
+│   │   │   └── live_index_polling/      # Production app — GMSI hourly index feed
+│   │   └── notebooks/
+│   │       └── live/                    # Live polling integration guides
+│   └── global_commodity_sentiment/
+│       ├── app/
+│       │   ├── live_headline_polling/   # Example app — GCSI headline feed
+│       │   └── live_index_polling/      # Example app — GCSI hourly index
+│       ├── notebooks/
+│       │   ├── getting_started/         # First call, first chart
+│       │   ├── live/                    # Live polling integration guides
+│       │   ├── research/                # Bulk history and topic hierarchy
+│       │   └── backtesting/             # Signal assessment method template
+│       └── reference/                   # GCSI topic taxonomy
 ```
 
 ---
@@ -181,6 +193,32 @@ docker compose up --build
 
 ---
 
+### Global Commodity Sentiment Indices
+
+GCSI scores headlines about **84 commodities in six sectors** (Energy, Metals, Agriculture, Power, Freight and Carbon) from 2015 onwards. Each headline carries **three horizon scores**, one per part of the futures curve. Positive means bullish for the commodity price.
+
+| `sentiment_type` | Part of the curve |
+|---|---|
+| `short_term` | Immediate reaction at the front of the curve |
+| `medium_term` | The 3–6 month segment |
+| `long_term` | The 12+ month segment |
+
+Headlines are linked to a commodity as `EXPLICIT` (the commodity, its benchmarks and aliases), `RELATED_ENTITY` (linked entities in the knowledge graph) or `MACROECONOMIC` (relevant GMSI macro headlines). The hourly index adds a `COMBINED` series, which is the total of the three. Topics follow a sector → driver → topic hierarchy, for example `Energy::Supply::Outages & Disruptions`.
+
+| Notebook / app | What it shows |
+|---|---|
+| [`gcsi_quickstart.ipynb`](systematic/global_commodity_sentiment/notebooks/getting_started/gcsi_quickstart.ipynb) | First call and first chart: a week of Brent by horizon |
+| [`gcsi_index_polling.ipynb`](systematic/global_commodity_sentiment/notebooks/live/gcsi_index_polling.ipynb) | Hourly index polling into SQLite, with a calibrated HIGH / NEUTRAL / LOW indicator |
+| [`gcsi_headline_polling.ipynb`](systematic/global_commodity_sentiment/notebooks/live/gcsi_headline_polling.ipynb) | Headline feed, match types and topic probability, with your own index on receipt time |
+| [`gcsi_bulk_history.ipynb`](systematic/global_commodity_sentiment/notebooks/research/gcsi_bulk_history.ipynb) | Bulk download to a daily panel from 2015, with correctly pooled statistics |
+| [`gcsi_topic_hierarchy.ipynb`](systematic/global_commodity_sentiment/notebooks/research/gcsi_topic_hierarchy.ipynb) | Driver roll-ups and exact attribution of a change to topics |
+| [`gcsi_cross_commodity_signal_assessment.ipynb`](systematic/global_commodity_sentiment/notebooks/backtesting/eval/gcsi_cross_commodity_signal_assessment.ipynb) | Method template: in-sample selection with BH-FDR, embargoed hold-out, your own prices |
+| [`app/live_index_polling`](systematic/global_commodity_sentiment/app/live_index_polling/) · [`app/live_headline_polling`](systematic/global_commodity_sentiment/app/live_headline_polling/) | `poller` / `api` / `dashboard` Docker apps |
+
+The [GCSI README](systematic/global_commodity_sentiment/README.md) covers the field dictionary and the rules for reading the data correctly: timestamps, sparse hours, revisions, multi-label topics and pooling.
+
+---
+
 ### Regional Macro Sentiment
 
 #### Live Polling Application
@@ -220,7 +258,7 @@ This notebook applies the same quantitative methodology as the headline asset ba
 ### Run a notebook
 
 ```bash
-git clone https://github.com/permutable-ai/permutable-examples.git
+git clone https://github.com/saffronblueai/permutable-examples.git
 cd permutable-examples
 
 pip install jupyter pandas numpy scipy matplotlib seaborn
