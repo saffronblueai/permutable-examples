@@ -1,5 +1,7 @@
 # GCSI Hourly Index Live Polling Application
 
+![Dashboard screenshot](./dashboard.png)
+
 An example Python application that continuously polls the [Permutable AI](https://permutable.ai) **Global Commodity Sentiment Indices (GCSI)** hourly index, stores it in a local database, and exposes it through a FastAPI service and a Plotly Dash monitoring dashboard.
 
 > **This is a reference example, not a production template.** It shows the integration pattern and gives you a working starting point. Review, adapt and harden it before any real use, including storage, authentication, error handling and deployment.
@@ -78,7 +80,7 @@ All configuration comes from `.env`, which every service reads.
 | `API_KEY` | *(required)* | Your Permutable AI API key |
 | `BASE_URL` | `https://copilot-api.permutable.ai/v1` | API base URL |
 | `INDEX_LIVE_PATH` / `INDEX_HISTORICAL_PATH` | `/headlines/index/gcsi/live`, `/headlines/index/gcsi/historical` | GCSI index routes |
-| `TICKERS` | `BZ_COM,CL_COM,TFM_COM,QC_COM` | Commodities to monitor |
+| `TICKERS` | `BZ_COM,QO_COM,ZC_COM,EUA_COM` | Commodities to monitor |
 | `INDEX_TYPES` | `COMBINED` | Any of `COMBINED`, `EXPLICIT`, `RELATED_ENTITY`, `MACROECONOMIC` |
 | `SENTIMENT_TYPES` | `short_term,medium_term,long_term` | Horizons to poll. Each call uses `topic_preset=ALL`. |
 | `POLL_INTERVAL_SECONDS` | `900` | Seconds between live polls |

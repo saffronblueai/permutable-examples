@@ -14,9 +14,9 @@ This repository provides end-to-end reference material — from single-file Jupy
 - [Repository Structure](#repository-structure)
 - [Examples](#examples)
   - [Headline Asset Sentiment](#headline-asset-sentiment)
-  - [Regional Macro Sentiment](#regional-macro-sentiment)
   - [Global Macro Sentiment Indices](#global-macro-sentiment-indices)
   - [Global Commodity Sentiment Indices](#global-commodity-sentiment-indices)
+  - [Regional Macro Sentiment](#regional-macro-sentiment)
 - [Getting Started](#getting-started)
 - [Prerequisites](#prerequisites)
 - [API Access](#api-access)
@@ -63,9 +63,7 @@ permutable-examples/
 │       │   └── live_index_polling/      # Example app — GCSI hourly index
 │       ├── notebooks/
 │       │   ├── getting_started/         # First call, first chart
-│       │   ├── live/                    # Live polling integration guides
-│       │   ├── research/                # Bulk history and topic hierarchy
-│       │   └── backtesting/             # Signal assessment method template
+│       │   └── live/                    # Live polling integration guides
 │       └── reference/                   # GCSI topic taxonomy
 ```
 
@@ -210,9 +208,6 @@ Headlines are linked to a commodity as `EXPLICIT` (the commodity, its benchmarks
 | [`gcsi_quickstart.ipynb`](systematic/global_commodity_sentiment/notebooks/getting_started/gcsi_quickstart.ipynb) | First call and first chart: a week of Brent by horizon |
 | [`gcsi_index_polling.ipynb`](systematic/global_commodity_sentiment/notebooks/live/gcsi_index_polling.ipynb) | Hourly index polling into SQLite, with a calibrated HIGH / NEUTRAL / LOW indicator |
 | [`gcsi_headline_polling.ipynb`](systematic/global_commodity_sentiment/notebooks/live/gcsi_headline_polling.ipynb) | Headline feed, match types and topic probability, with your own index on receipt time |
-| [`gcsi_bulk_history.ipynb`](systematic/global_commodity_sentiment/notebooks/research/gcsi_bulk_history.ipynb) | Bulk download to a daily panel from 2015, with correctly pooled statistics |
-| [`gcsi_topic_hierarchy.ipynb`](systematic/global_commodity_sentiment/notebooks/research/gcsi_topic_hierarchy.ipynb) | Driver roll-ups and exact attribution of a change to topics |
-| [`gcsi_cross_commodity_signal_assessment.ipynb`](systematic/global_commodity_sentiment/notebooks/backtesting/eval/gcsi_cross_commodity_signal_assessment.ipynb) | Method template: in-sample selection with BH-FDR, embargoed hold-out, your own prices |
 | [`app/live_index_polling`](systematic/global_commodity_sentiment/app/live_index_polling/) · [`app/live_headline_polling`](systematic/global_commodity_sentiment/app/live_headline_polling/) | `poller` / `api` / `dashboard` Docker apps |
 
 The [GCSI README](systematic/global_commodity_sentiment/README.md) covers the field dictionary and the rules for reading the data correctly: timestamps, sparse hours, revisions, multi-label topics and pooling.
@@ -303,7 +298,7 @@ Python package requirements for each app are in the service-level `requirements.
 
 All examples require a **Permutable AI API key**. Set it as the `API_KEY` environment variable (apps) or enter it via `getpass` when prompted (notebooks).
 
-- Documentation: [docs.permutable.ai](https://docs.permutable.ai)
+- Documentation: [docs.copilot-api.permutable.ai](https://docs.copilot-api.permutable.ai)
 - Account and key management: [permutable.ai](https://permutable.ai)
 
 ---

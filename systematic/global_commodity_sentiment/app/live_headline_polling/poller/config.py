@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # Stored as plain strings so pydantic-settings doesn't attempt json.loads on
     # comma-separated values. Exposed as lists via the computed properties below.
     tickers: str = Field("BZ_COM", validation_alias="TICKERS")
-    # Empty = every match type in one request (placeholder behaviour).
+    # Empty = the API default, COMBINED.
     match_types: str = Field("", validation_alias="MATCH_TYPES")
 
     # Polling

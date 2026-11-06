@@ -1,6 +1,6 @@
 # Global Commodity Sentiment Indices (GCSI)
 
-Examples, integration guides and research notebooks for **Permutable AI's Global Commodity Sentiment Indices (GCSI)**. GCSI covers headline sentiment for **84 commodities in six sectors** (Energy, Metals, Agriculture, Power, Freight and Carbon), with history from 2015.
+Examples and integration guides for **Permutable AI's Global Commodity Sentiment Indices (GCSI)**. GCSI covers headline sentiment for **84 commodities in six sectors** (Energy, Metals, Agriculture, Power, Freight and Carbon), with history from 2015.
 
 > **Disclaimer:** All examples are provided for informational and research purposes only. Nothing here constitutes financial advice or a recommendation to buy, sell, or hold any asset. Sentiment scores are model outputs. They describe how news was judged at publication and are not forecasts of future prices.
 
@@ -114,12 +114,6 @@ global_commodity_sentiment/
 │   ├── live/
 │   │   ├── gcsi_index_polling.ipynb     # Hourly index → SQLite → indicator
 │   │   └── gcsi_headline_polling.ipynb  # Headline feed → own aggregation
-│   ├── research/
-│   │   ├── gcsi_bulk_history.ipynb      # Bulk ZIP → daily feature table from 2015
-│   │   └── gcsi_topic_hierarchy.ipynb   # Topic → driver → sector roll-ups and attribution
-│   └── backtesting/
-│       └── eval/
-│           └── gcsi_cross_commodity_signal_assessment.ipynb
 └── app/
     ├── live_index_polling/          # poller / api / dashboard (Docker)
     └── live_headline_polling/       # poller / api / dashboard (Docker)
@@ -127,12 +121,9 @@ global_commodity_sentiment/
 
 | Notebook | Data source | What it shows |
 |---|---|---|
-| [`gcsi_quickstart`](notebooks/getting_started/gcsi_quickstart.ipynb) | API or bulk ZIP | Authenticate, pull a week of Brent, and plot all three horizons |
+| [`gcsi_quickstart`](notebooks/getting_started/gcsi_quickstart.ipynb) | API | Authenticate, pull a week of Brent, and plot all three horizons |
 | [`gcsi_index_polling`](notebooks/live/gcsi_index_polling.ipynb) | API | Live hourly index polling into SQLite, horizon and index-type breakdowns, and a calibrated HIGH / NEUTRAL / LOW indicator |
 | [`gcsi_headline_polling`](notebooks/live/gcsi_headline_polling.ipynb) | API | Headline feed with match types, topic-probability filtering, the three horizons and your own 15-minute aggregation |
-| [`gcsi_bulk_history`](notebooks/research/gcsi_bulk_history.ipynb) | Bulk ZIP | Download a commodity's history and build a clean daily panel with correctly pooled statistics |
-| [`gcsi_topic_hierarchy`](notebooks/research/gcsi_topic_hierarchy.ipynb) | Bulk ZIP or API | Roll up L2 → L1 → sector, find which drivers moved a commodity, and compare commodities across a sector |
-| [`gcsi_cross_commodity_signal_assessment`](notebooks/backtesting/eval/gcsi_cross_commodity_signal_assessment.ipynb) | Bulk ZIP + **your own prices** | A method template: rolling transforms, correlation, BH-FDR and a walk-forward hold-out, graded across commodities |
 
 The two apps use the same three-service architecture as the other products in this repository (`poller` / `api` / `dashboard`). See each app's README.
 
@@ -148,8 +139,6 @@ pip install jupyter requests pandas numpy scipy matplotlib seaborn
 export API_KEY=<your-permutable-api-key>   # or enter it when the notebook prompts
 jupyter notebook notebooks/getting_started/gcsi_quickstart.ipynb
 ```
-
-To work from a bulk download instead of the API, set `DATA_SOURCE = "zip"` and `ZIP_DIR` in the notebook's configuration cell. Point `ZIP_DIR` at the folder holding the per-ticker ZIPs (for example `BZ_COM.zip`) downloaded from the Datasets page.
 
 ---
 

@@ -1,5 +1,7 @@
 # GCSI Headline Feed Live Polling Application
 
+![Dashboard screenshot](./dashboard.png)
+
 An example Python application that continuously polls the [Permutable AI](https://permutable.ai) **Global Commodity Sentiment Indices (GCSI)** headline feed, stores each headline in a local database, builds its own short-interval index from them, and serves the results through a FastAPI service and a Plotly Dash dashboard.
 
 > **This is a reference example, not a production template.** It shows the integration pattern and gives you a working starting point. Review, adapt and harden it before any real use, including storage, authentication, error handling and deployment.

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     refresh_interval_ms: int = 60_000
     dashboard_hours: int = 168
 
-    tickers: str = Field("BZ_COM,CL_COM,TFM_COM,QC_COM", validation_alias="TICKERS")
+    tickers: str = Field("BZ_COM,QO_COM,ZC_COM,EUA_COM", validation_alias="TICKERS")
     index_types: str = Field("COMBINED", validation_alias="INDEX_TYPES")
 
     @computed_field  # type: ignore[misc]

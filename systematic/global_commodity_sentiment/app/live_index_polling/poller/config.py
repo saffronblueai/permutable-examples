@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Stored as plain strings so pydantic-settings doesn't attempt json.loads on
     # comma-separated values. Exposed as lists via the computed properties below.
-    tickers: str = Field("BZ_COM,CL_COM,TFM_COM,QC_COM", validation_alias="TICKERS")
+    tickers: str = Field("BZ_COM,QO_COM,ZC_COM,EUA_COM", validation_alias="TICKERS")
     index_types: str = Field("COMBINED", validation_alias="INDEX_TYPES")
     sentiment_types: str = Field("short_term,medium_term,long_term", validation_alias="SENTIMENT_TYPES")
 
