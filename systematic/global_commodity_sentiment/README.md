@@ -127,6 +127,16 @@ global_commodity_sentiment/
 
 The two apps use the same three-service architecture as the other products in this repository (`poller` / `api` / `dashboard`). See each app's README.
 
+### Example dashboards
+
+**[`app/live_index_polling`](app/live_index_polling/)** polls the hourly index for several commodities and shows the 24-hour weighted average, news volume, a calibrated HIGH / NEUTRAL / LOW indicator and the busiest topics.
+
+![GCSI index dashboard](app/live_index_polling/dashboard.png)
+
+**[`app/live_headline_polling`](app/live_headline_polling/)** polls the headline feed for one commodity and builds its own 15-minute index by match type, with news volume and the busiest topics.
+
+![GCSI headline dashboard](app/live_headline_polling/dashboard.png)
+
 ---
 
 ## Quickstart
