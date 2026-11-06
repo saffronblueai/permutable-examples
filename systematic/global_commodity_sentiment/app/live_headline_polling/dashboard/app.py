@@ -3,25 +3,30 @@ from datetime import datetime, timezone
 import pandas as pd
 import plotly.graph_objects as go
 import requests
-from config import settings
+from config import settings, ticker_label
 from dash import Dash, Input, Output, callback, dash_table, dcc, html
 
-# ── Colour palettes ────────────────────────────────────────────────────────────
-MATCH_COLORS = {"EXPLICIT": "#3498db", "RELATED_ENTITY": "#9b59b6", "MACROECONOMIC": "#f39c12"}
-_CHART_BASE = dict(template="plotly_dark", paper_bgcolor="#1a1a2e", plot_bgcolor="#1a1a2e")
-_LEGEND = dict(x=1.01, xanchor="left", y=1, yanchor="top")
-_CARD_STYLE = {
-    "background": "#1e1e30",
-    "border": "1px solid #2e2e45",
-    "borderRadius": "10px",
-    "padding": "16px 20px",
-    "flex": "1",
-    "minWidth": "120px",
-    "textAlign": "center",
-}
+# ── Theme ──────────────────────────────────────────────────────────────────────
+PAGE = "#0d0d0d"
+SURFACE = "#1a1a19"
+INK = "#f0efec"
+INK_2 = "#c3c2b7"
+MUTED = "#898781"
+GRID = "#2c2c2a"
+BASELINE = "#383835"
+BORDER = "1px solid rgba(255, 255, 255, 0.10)"
+FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif'
 
-ALL = "ALL"
+# Categorical slots in a fixed order (checked for colour-blind separation on the dark surface).
+MATCH_COLORS = {"EXPLICIT": "#3987e5", "RELATED_ENTITY": "#d95926", "MACROECONOMIC": "#199e70"}
+MATCH_ORDER = ["EXPLICIT", "RELATED_ENTITY", "MACROECONOMIC"]
+POSITIVE, NEGATIVE = "#0ca30c", "#d03b3b"
+
 HORIZONS = ["short_term", "medium_term", "long_term"]
+HORIZON_LABELS = {"short_term": "Short term", "medium_term": "Medium term", "long_term": "Long term"}
+
+_CARD_STYLE = {"background": SURFACE, "border": BORDER, "borderRadius": "10px"}
+_GRAPH_CONFIG = {"displaylogo": False, "modeBarButtonsToRemove": ["lasso2d", "select2d"]}
 
 app = Dash(__name__, title="GCSI Headline Monitor")
 
@@ -38,23 +43,61 @@ def fetch_json(path: str, params: dict | None = None) -> list | dict | None:
         return None
 
 
-def _empty_fig(message: str = "No data: waiting for poller…", height: int = 300) -> go.Figure:
-    fig = go.Figure()
-    fig.add_annotation(text=message, xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
-                       font=dict(size=14, color="#888"))
-    fig.update_layout(**_CHART_BASE, height=height, margin=dict(l=0, r=0, t=40, b=20))
+def _style(fig: go.Figure, title: str, height: int, legend: bool = True) -> go.Figure:
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor=SURFACE,
+        plot_bgcolor=SURFACE,
+        font=dict(family=FONT, size=12, color=INK_2),
+        title=dict(text=title, x=0.01, xanchor="left", y=0.97, yanchor="top", font=dict(size=14, color=INK)),
+        height=height,
+        margin=dict(l=16, r=24, t=76 if legend else 52, b=40),
+        showlegend=legend,
+        legend=dict(orientation="h", x=0, xanchor="left", y=1.0, yanchor="bottom", font=dict(color=INK_2),
+                    bgcolor="rgba(0,0,0,0)", traceorder="normal"),
+        hoverlabel=dict(bgcolor="#262624", bordercolor=BASELINE, font=dict(family=FONT, color=INK)),
+        bargap=0.2,
+        barcornerradius=3,
+    )
+    axis = dict(gridcolor=GRID, gridwidth=1, zeroline=False, linecolor=BASELINE, tickfont=dict(color=MUTED),
+                title_font=dict(color=MUTED, size=12))
+    fig.update_xaxes(**axis)
+    fig.update_yaxes(**axis)
     return fig
 
 
-def _stat_card(label: str, value: str, color: str = "#ccc") -> html.Div:
+def _empty_fig(message: str = "No data: waiting for poller…", height: int = 300) -> go.Figure:
+    fig = go.Figure()
+    fig.add_annotation(text=message, xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+                       font=dict(size=14, color=MUTED))
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+    return _style(fig, "", height, legend=False)
+
+
+def _graph(figure: go.Figure) -> html.Div:
+    return html.Div(dcc.Graph(figure=figure, config=_GRAPH_CONFIG),
+                    style={**_CARD_STYLE, "padding": "8px", "marginBottom": "16px", "overflow": "hidden"})
+
+
+def _stat_card(label: str, value: str, dot: str | None = None) -> html.Div:
+    marker = [html.Span(style={"display": "inline-block", "width": "8px", "height": "8px", "borderRadius": "50%",
+                               "background": dot, "marginRight": "6px"})] if dot else []
     return html.Div(
         [
-            html.Div(label, style={"color": "#888", "fontSize": "11px", "marginBottom": "6px",
-                                   "textTransform": "uppercase", "letterSpacing": "0.05em"}),
-            html.Div(value, style={"color": color, "fontSize": "22px", "fontWeight": "700"}),
+            html.Div(marker + [label], style={"color": MUTED, "fontSize": "11px", "marginBottom": "6px",
+                                              "textTransform": "uppercase", "letterSpacing": "0.06em"}),
+            html.Div(value, style={"color": INK, "fontSize": "22px", "fontWeight": "600"}),
         ],
-        style=_CARD_STYLE,
+        style={**_CARD_STYLE, "padding": "14px 20px", "flex": "1", "minWidth": "160px"},
     )
+
+
+def _match_groups(bins: pd.DataFrame):
+    """Match types in a fixed order, so each keeps its colour and legend position."""
+    present = set(bins["match_type"])
+    for match_type in [m for m in MATCH_ORDER if m in present] + sorted(present - set(MATCH_ORDER)):
+        yield match_type, bins[bins["match_type"] == match_type]
 
 
 # ── Chart builders ─────────────────────────────────────────────────────────────
@@ -62,42 +105,49 @@ def _stat_card(label: str, value: str, color: str = "#ccc") -> html.Div:
 
 def _build_smoothed(bins: pd.DataFrame, title: str) -> go.Figure:
     if bins.empty:
-        return _empty_fig(height=360)
+        return _empty_fig(height=380)
     fig = go.Figure()
-    for match_type, sub in bins.groupby("match_type"):
+    for match_type, sub in _match_groups(bins):
         fig.add_trace(go.Scatter(x=sub["bin_end"], y=sub["sentiment_smooth"], mode="lines", name=match_type,
-                                 line=dict(color=MATCH_COLORS.get(match_type, "#ccc"), width=2)))
-    fig.add_hline(y=0, line_dash="dot", line_color="#555", line_width=1)
-    fig.update_layout(**_CHART_BASE, title=title, xaxis_title="Bin end, receipt time (UTC)",
-                      yaxis_title="Weighted avg score", legend=_LEGEND, height=360, margin=dict(l=0, r=160, t=60, b=40))
+                                 line=dict(color=MATCH_COLORS.get(match_type, MUTED), width=2),
+                                 hovertemplate=f"{match_type}: %{{y:+.3f}}<extra></extra>"))
+    fig.add_hline(y=0, line_color=BASELINE, line_width=1)
+    _style(fig, title, 380)
+    fig.update_layout(hovermode="x unified")
+    fig.update_yaxes(title_text="Weighted average score")
+    fig.update_xaxes(title_text="Bin end, receipt time (UTC)")
     return fig
 
 
 def _build_volume(bins: pd.DataFrame, title: str) -> go.Figure:
     if bins.empty:
-        return _empty_fig(height=260)
+        return _empty_fig(height=280)
     fig = go.Figure()
-    for match_type, sub in bins.groupby("match_type"):
+    for match_type, sub in _match_groups(bins):
         fig.add_trace(go.Bar(x=sub["bin_end"], y=sub["headline_count"], name=match_type,
-                             marker_color=MATCH_COLORS.get(match_type, "#ccc")))
-    fig.update_layout(**_CHART_BASE, barmode="stack", title=title, xaxis_title="Bin end, receipt time (UTC)",
-                      yaxis_title="Rows (headline × topic)", legend=_LEGEND, height=260,
-                      margin=dict(l=0, r=160, t=60, b=40))
+                             marker_color=MATCH_COLORS.get(match_type, MUTED),
+                             hovertemplate=f"{match_type}: %{{y:,}}<extra></extra>"))
+    _style(fig, title, 280)
+    fig.update_layout(barmode="stack", hovermode="x unified", barcornerradius=0)
+    fig.update_yaxes(title_text="Rows (headline × topic)")
+    fig.update_xaxes(title_text="Bin end, receipt time (UTC)")
     return fig
 
 
 def _build_topics(topics: pd.DataFrame, title: str) -> go.Figure:
     if topics.empty:
-        return _empty_fig(height=340)
+        return _empty_fig(height=360)
     topics = topics.sort_values("sentiment_avg")
     fig = go.Figure(go.Bar(
         x=topics["sentiment_avg"], y=topics["topic"], orientation="h",
-        marker_color=["#e74c3c" if v < 0 else "#2ecc71" for v in topics["sentiment_avg"]],
-        customdata=topics["headline_count"], hovertemplate="%{y}<br>Avg: %{x:.3f}<br>Rows: %{customdata}<extra></extra>",
+        marker_color=[NEGATIVE if v < 0 else POSITIVE for v in topics["sentiment_avg"]],
+        customdata=topics["headline_count"],
+        hovertemplate="%{y}<br>Average: %{x:+.3f}<br>Rows: %{customdata:,}<extra></extra>",
     ))
-    fig.add_vline(x=0, line_color="#555", line_dash="dash", line_width=1)
-    fig.update_layout(**_CHART_BASE, title=title, xaxis_title="Average score",
-                      height=max(340, len(topics) * 28 + 80), margin=dict(l=0, r=0, t=50, b=30))
+    fig.add_vline(x=0, line_color=BASELINE, line_width=1)
+    _style(fig, title, max(360, len(topics) * 28 + 90), legend=False)
+    fig.update_xaxes(title_text="Average score")
+    fig.update_yaxes(showgrid=False)
     return fig
 
 
@@ -117,12 +167,15 @@ def _headline_table(rows: list[dict], horizon: str) -> dash_table.DataTable:
     return dash_table.DataTable(
         data=data,
         columns=[{"name": c, "id": c} for c in ["received", "match_type", "topic", "score", "headline", "source"]],
-        style_header={"backgroundColor": "#1e1e30", "color": "#ccc", "fontWeight": "700", "border": "1px solid #2e2e45"},
-        style_cell={"backgroundColor": "#1a1a2e", "color": "#ddd", "border": "1px solid #2e2e45", "fontSize": "12px",
-                    "textAlign": "left", "whiteSpace": "normal", "height": "auto", "maxWidth": "520px"},
+        style_as_list_view=True,
+        style_header={"backgroundColor": SURFACE, "color": MUTED, "fontWeight": "600", "fontSize": "11px",
+                      "textTransform": "uppercase", "letterSpacing": "0.06em", "borderBottom": BORDER},
+        style_cell={"backgroundColor": SURFACE, "color": INK_2, "borderBottom": BORDER, "fontSize": "12px",
+                    "fontFamily": FONT, "textAlign": "left", "whiteSpace": "normal", "height": "auto",
+                    "maxWidth": "520px", "padding": "8px 10px"},
         style_data_conditional=[
-            {"if": {"filter_query": "{score} > 0", "column_id": "score"}, "color": "#2ecc71"},
-            {"if": {"filter_query": "{score} < 0", "column_id": "score"}, "color": "#e74c3c"},
+            {"if": {"column_id": "score"}, "color": INK, "fontVariantNumeric": "tabular-nums"},
+            {"if": {"column_id": "headline"}, "color": INK},
         ],
         page_size=10,
     )
@@ -130,36 +183,38 @@ def _headline_table(rows: list[dict], horizon: str) -> dash_table.DataTable:
 
 # ── Layout ─────────────────────────────────────────────────────────────────────
 
-_dropdown_style = {"minWidth": "180px", "color": "#000", "fontSize": "13px"}
+_dropdown_style = {"minWidth": "190px", "fontSize": "13px"}
 app.layout = html.Div(
     [
         html.Div(
             [
                 html.Div([
-                    html.H1("GCSI Headline Monitor", style={"margin": "0", "color": "#fff", "fontSize": "20px"}),
+                    html.H1("GCSI Headline Monitor", style={"margin": "0", "color": INK, "fontSize": "20px",
+                                                            "fontWeight": "600"}),
                     html.P("Permutable AI  ·  Global Commodity Sentiment Indices  ·  Headline Feed",
-                           style={"margin": "2px 0 0", "color": "#aaa", "fontSize": "12px"}),
+                           style={"margin": "4px 0 0", "color": MUTED, "fontSize": "12px"}),
                 ]),
                 html.Div(
                     [
                         dcc.Dropdown(id="ticker-dropdown", value=settings.tickers_list[0], clearable=False,
-                                     style=_dropdown_style,
-                                     options=[{"label": t, "value": t} for t in settings.tickers_list]),
+                                     style=_dropdown_style, className="filter",
+                                     options=[{"label": ticker_label(t), "value": t} for t in settings.tickers_list]),
                         dcc.Dropdown(id="horizon-dropdown", value="short_term", clearable=False, style=_dropdown_style,
-                                     options=[{"label": h, "value": h} for h in HORIZONS]),
+                                     className="filter",
+                                     options=[{"label": HORIZON_LABELS[h], "value": h} for h in HORIZONS]),
                     ],
-                    style={"display": "flex", "gap": "12px"},
+                    style={"display": "flex", "gap": "10px", "flexWrap": "wrap"},
                 ),
             ],
-            style={"background": "#0f0f1a", "padding": "16px 32px", "borderBottom": "2px solid #222",
-                   "display": "flex", "alignItems": "center", "justifyContent": "space-between", "gap": "24px"},
+            style={"padding": "20px 32px", "borderBottom": BORDER, "display": "flex", "alignItems": "center",
+                   "justifyContent": "space-between", "gap": "24px", "flexWrap": "wrap"},
         ),
-        html.Div(id="main-content", style={"padding": "24px 32px"}),
+        html.Div(id="main-content", style={"padding": "24px 32px 8px"}),
         dcc.Interval(id="interval", interval=settings.refresh_interval_ms, n_intervals=0),
-        html.Div(id="last-updated", style={"textAlign": "right", "color": "#555", "fontSize": "11px",
-                                           "padding": "0 32px 12px"}),
+        html.Div(id="last-updated", style={"textAlign": "right", "color": MUTED, "fontSize": "11px",
+                                           "padding": "0 32px 16px"}),
     ],
-    style={"background": "#12121f", "minHeight": "100vh", "fontFamily": "Inter, sans-serif"},
+    style={"background": PAGE, "minHeight": "100vh", "fontFamily": FONT},
 )
 
 
@@ -179,7 +234,7 @@ def update_content(ticker: str, horizon: str, n: int):
 
     bins = pd.DataFrame(fetch_json("/sentiment/bins", {"ticker": ticker, "horizon": horizon, "hours": hours}) or [])
     if bins.empty:
-        return [html.P("No data available: waiting for poller…", style={"color": "#888"})], ts_label
+        return [html.P("No data available: waiting for poller…", style={"color": MUTED})], ts_label
     bins["bin_end"] = pd.to_datetime(bins["bin_end"], utc=True)
 
     mix = pd.DataFrame(fetch_json("/match-types", {"ticker": ticker, "hours": hours}) or [])
@@ -188,20 +243,27 @@ def update_content(ticker: str, horizon: str, n: int):
 
     cards = [_stat_card("Rows (window)", f"{int(mix['rows'].sum()):,}" if not mix.empty else "0"),
              _stat_card("Distinct articles", f"{int(mix['articles'].sum()):,}" if not mix.empty else "0")]
-    for row in mix.itertuples():
-        avg = getattr(row, f"avg_{horizon}")
-        cards.append(_stat_card(f"{row.match_type} avg", f"{avg:+.3f}" if avg is not None else "n/a",
-                                color=MATCH_COLORS.get(row.match_type, "#ccc")))
+    if not mix.empty:
+        mix = mix.set_index("match_type").reindex([m for m in MATCH_ORDER if m in set(mix["match_type"])])
+        for match_type, row in mix.iterrows():
+            avg = row[f"avg_{horizon}"]
+            cards.append(_stat_card(f"{match_type} avg", f"{avg:+.3f}" if pd.notna(avg) else "n/a",
+                                    dot=MATCH_COLORS.get(match_type, MUTED)))
 
-    label = f"{ticker}  |  {horizon}"
+    label = f"{ticker_label(ticker)}  ·  {HORIZON_LABELS[horizon]}"
     return [
-        html.Div(cards, style={"display": "flex", "gap": "12px", "flexWrap": "wrap", "marginBottom": "20px"}),
-        dcc.Graph(figure=_build_smoothed(bins, f"{label}  |  weighted average by match type (own bins)"),
-                  style={"marginBottom": "16px"}),
-        dcc.Graph(figure=_build_volume(bins, f"{label}  |  rows per bin"), style={"marginBottom": "24px"}),
-        dcc.Graph(figure=_build_topics(topics, f"{label}  |  15 busiest topics"), style={"marginBottom": "24px"}),
-        html.H3("Strongest headlines, last 6 hours", style={"color": "#ccc", "fontSize": "15px"}),
-        _headline_table(strongest, horizon),
+        html.Div(cards, style={"display": "flex", "gap": "12px", "flexWrap": "wrap", "marginBottom": "16px"}),
+        _graph(_build_smoothed(bins, f"Weighted average by match type (own bins)  ·  {label}")),
+        _graph(_build_volume(bins, f"Rows per bin  ·  {label}")),
+        _graph(_build_topics(topics, f"15 busiest topics  ·  {label}")),
+        html.Div(
+            [
+                html.H3("Strongest headlines, last 6 hours",
+                        style={"color": INK, "fontSize": "14px", "fontWeight": "600", "margin": "4px 4px 12px"}),
+                _headline_table(strongest, horizon),
+            ],
+            style={**_CARD_STYLE, "padding": "16px", "marginBottom": "16px"},
+        ),
     ], ts_label
 
 

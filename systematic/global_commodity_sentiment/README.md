@@ -95,7 +95,7 @@ These are the points most often got wrong when people first use the data. Every 
 | **Horizons** | Analyse one `sentiment_type` at a time. Never add horizons together. |
 | **Average sentiment** | `sentiment_avg = sentiment_sum / headline_count`, in [−1, +1] |
 | **Pooling `sentiment_std`** | Hourly standard deviations cannot be averaged. Rebuild the sum of squares as `(n − 1)·std² + n·mean²`, add those across hours, then recompute the standard deviation. See `pool` in the notebooks. |
-| **Score scale** | Hourly averages cluster well inside ±0.3. Calibrate thresholds from the data, using percentiles or z-scores, rather than fixed values such as ±0.5. |
+| **Score scale** | Calibrate thresholds from the data for each commodity and horizon, using percentiles or z-scores, rather than fixed values. |
 | **Backfill timing** | Historical receipt times were reconstructed for the backfill period. Treat point-in-time accuracy before the live period as approximate, and allow a lag in research. |
 | **Backfilled scores** | History before the live period was scored after the fact by the current sentiment models, so research results on it are in-sample for those models. Only data received live shows what you would have seen at the time. |
 

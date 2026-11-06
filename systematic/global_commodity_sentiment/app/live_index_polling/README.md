@@ -63,7 +63,7 @@ docker compose up --build
 | Series | One series per **ticker × `sentiment_type` × `index_type`**. Horizons and index types are never added together. |
 | Hourly value | Topic rows are added per hour. Topics are multi-label, so the count is **topic-links** and the average is topic-weighted. |
 | Smoothing | `sentiment_smooth = Σ sentiment_sum / Σ headline_count` over the last `SMOOTHING_HOURS` (time-based, so hours with no news are handled correctly). Readings with fewer than `MIN_HEADLINES` topic-links, or inside the first window, are left empty. |
-| Indicator | `HIGH` / `LOW` when `sentiment_smooth` crosses that series' own thresholds. By default these are the 90th and 10th percentiles over `CALIBRATION_HOURS` (`THRESHOLD_MODE=percentile`). GCSI averages sit well inside ±0.3, so fixed thresholds such as ±0.5 would never fire. |
+| Indicator | `HIGH` / `LOW` when `sentiment_smooth` crosses that series' own thresholds. By default these are the 90th and 10th percentiles over `CALIBRATION_HOURS` (`THRESHOLD_MODE=percentile`), so each commodity is judged against its own history. |
 | Topics | Volume-weighted average per topic: `Σ sentiment_sum / Σ headline_count` over the window. |
 | Revisions | The newest bars can be revised. Every poll upserts, and a restart re-fetches `REVISION_HOURS` behind the newest stored bar. |
 
@@ -122,8 +122,8 @@ curl "http://localhost:8000/topics?ticker=BZ_COM&hours=48"
 
 ## Dashboard
 
-- **Selectors:** ticker (or all), horizon, and index type
-- **Stat cards:** newest bar, topic-links in the last 24 hours, and HIGH / LOW ticker counts
+- **Selectors:** commodity (or all), horizon, and index type. Common tickers are shown by name; add more in `TICKER_NAMES` in `dashboard/config.py`
+- **Stat cards:** newest bar and topic-links in the last 24 hours
 - **24h weighted average sentiment** per ticker, with the calibrated HIGH / LOW lines when one ticker is selected
 - **Hourly topic-links:** news volume
 - **Indicator heatmap:** HIGH / NEUTRAL / LOW per ticker and hour

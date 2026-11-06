@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     smoothing_hours: int = 24
     min_headlines: int = 5  # fewer topic-links than this in the window → no reading
 
-    # Indicator thresholds. GCSI averages usually sit well inside ±0.3, so by default the
-    # thresholds are calibrated per ticker and horizon from the stored history.
+    # Indicator thresholds. A fixed level that suits one commodity can misfire on another, so by
+    # default the thresholds are calibrated per ticker and horizon from the stored history.
     threshold_mode: str = "percentile"  # percentile | fixed
     upper_percentile: float = 0.90
     lower_percentile: float = 0.10

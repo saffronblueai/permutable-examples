@@ -109,7 +109,7 @@ curl "http://localhost:8000/headlines?ticker=BZ_COM&sort=strongest&limit=10"
 
 ## Dashboard
 
-- **Selectors:** ticker and horizon
+- **Selectors:** commodity and horizon. Common tickers are shown by name; add more in `TICKER_NAMES` in `dashboard/config.py`
 - **Stat cards:** rows, distinct articles, and the average score for each match type
 - **Weighted average by match type**, from your own bins
 - **Rows per bin**, stacked by match type
