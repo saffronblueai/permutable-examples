@@ -117,7 +117,7 @@ curl "http://localhost:8000/headlines?ticker=BZ_COM&sort=strongest&limit=10"
 - **Rows per bin**, stacked by match type
 - **Topics:** the 15 busiest topics
 - **Entity types:** what linked the news to the commodity, as distinct articles per matched entity type, coloured by family (commodity, physical asset, location, policy instrument)
-- **Country map:** one bubble per country the news is about, sized by distinct articles and coloured by average score; hover for the entity types behind it. Regions such as Global or Europe are counted in the title rather than mapped
+- **Country map:** each country the news is about, filled by its average score (grey under 10 articles); hover for the article count and the entity types behind it. Regions such as Global or Europe are counted in the title rather than mapped
 - **Strongest headlines** of the last 6 hours, for drill-down
 
 ---

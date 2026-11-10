@@ -181,11 +181,11 @@ def _build_entity_types(types: pd.DataFrame, title: str) -> go.Figure:
     return fig
 
 
-def _build_country_map(countries: pd.DataFrame, title: str, labels: int = 6) -> go.Figure:
-    """One bubble per country the news is about: size = distinct articles, colour = average score.
+def _build_country_map(countries: pd.DataFrame, title: str, labels: int = 6, min_articles: int = 10) -> go.Figure:
+    """Each country the news is about, filled by its average score; article counts and entity types on hover.
 
-    Bubbles sit on each country's centroid (ISO-3), and the busiest are labelled. Regions such as Global or Europe
-    are left off the map and counted in the title.
+    Countries with fewer than `min_articles` articles are filled grey, since a handful of headlines gives a noisy
+    average. Regions such as Global or Europe are left off the map and counted in the title.
     """
     if countries.empty:
         return _empty_fig(height=520)
@@ -197,22 +197,33 @@ def _build_country_map(countries: pd.DataFrame, title: str, labels: int = 6) -> 
         return _empty_fig("No country tags in the window", height=520)
     mapped["types"] = mapped["top_entity_types"].apply(
         lambda types: "<br>".join(f"{_type_label(t['entity_type'])}: {t['articles']:,}" for t in types) or "n/a")
-    limit = max(mapped["sentiment_avg"].abs().max(), 0.05)
-    # Short label for the busiest countries ("Iran, Islamic Republic of" → "Iran"); markers+text keeps it off the bubble
-    names = mapped["country"].str.split(",").str[0].str.replace("Russian Federation", "Russia")
-    text = [name if i < labels else "" for i, name in enumerate(names)]
-    fig = go.Figure(go.Scattergeo(
-        locations=mapped["iso3"], locationmode="ISO-3", mode="markers+text", text=text,
-        textposition="middle right", textfont=dict(size=11, color=INK),
-        customdata=mapped[["country", "articles", "sentiment_avg", "types"]],
-        hovertemplate="<b>%{customdata[0]}</b><br>%{customdata[1]:,} articles<br>Average %{customdata[2]:+.3f}"
-                      "<br><br>Linked by<br>%{customdata[3]}<extra></extra>",
-        marker=dict(size=7 + 34 * (mapped["articles"] / mapped["articles"].max()) ** 0.5,
-                    color=mapped["sentiment_avg"], colorscale="RdYlGn", cmin=-limit, cmax=limit,
-                    line=dict(width=0.8, color=PAGE), opacity=0.9,
-                    colorbar=dict(title=dict(text="Average<br>score", font=dict(color=MUTED)), len=0.7,
-                                  tickfont=dict(color=MUTED), outlinewidth=0)),
+    hover = ("<b>%{customdata[0]}</b><br>%{customdata[1]:,} articles<br>Average %{customdata[2]:+.3f}"
+             "<br><br>Linked by<br>%{customdata[3]}<extra></extra>")
+    fields = ["country", "articles", "sentiment_avg", "types"]
+    scored, sparse = mapped[mapped["articles"] >= min_articles], mapped[mapped["articles"] < min_articles]
+    limit = max(scored["sentiment_avg"].abs().max(), 0.05) if not scored.empty else 0.05
+    fig = go.Figure()
+    fig.add_trace(go.Choropleth(
+        locations=sparse["iso3"], locationmode="ISO-3", z=[0] * len(sparse), customdata=sparse[fields],
+        colorscale=[[0, "#4a4a46"], [1, "#4a4a46"]], showscale=False, hovertemplate=hover,
+        marker_line=dict(color=PAGE, width=0.5),
     ))
+    fig.add_trace(go.Choropleth(
+        locations=scored["iso3"], locationmode="ISO-3", z=scored["sentiment_avg"], customdata=scored[fields],
+        colorscale="RdYlGn", zmin=-limit, zmax=limit, hovertemplate=hover, marker_line=dict(color=PAGE, width=0.5),
+        colorbar=dict(title=dict(text="Average<br>score", font=dict(color=MUTED)), len=0.7,
+                      tickfont=dict(color=MUTED), outlinewidth=0),
+    ))
+    # Name the busiest countries ("Iran, Islamic Republic of" → "Iran") on their centroids
+    busiest = mapped.head(labels)
+    fig.add_trace(go.Scattergeo(
+        locations=busiest["iso3"], locationmode="ISO-3", mode="text", hoverinfo="skip",
+        text="<b>" + busiest["country"].str.split(",").str[0].str.replace("Russian Federation", "Russia") + "</b>",
+        textfont=dict(size=11, color=PAGE, family=FONT),
+    ))
+    if not sparse.empty:
+        fig.add_annotation(text=f"Grey: fewer than {min_articles} articles", xref="paper", yref="paper", x=0.01,
+                           y=0.02, showarrow=False, font=dict(size=11, color=MUTED))
     _style(fig, title, 520, legend=False)
     fig.update_geos(projection_type="natural earth", bgcolor=SURFACE, showframe=False,
                     showland=True, landcolor="#232321", showocean=True, oceancolor="#151514",
