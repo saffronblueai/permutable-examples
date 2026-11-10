@@ -154,12 +154,17 @@ def _build_topics(topics: pd.DataFrame, title: str) -> go.Figure:
     return fig
 
 
+def _type_label(entity_type: str) -> str:
+    name = entity_type.split(".")[-1]
+    return TYPE_LABELS.get(name, name.replace("_", " ").capitalize())
+
+
 def _build_entity_types(types: pd.DataFrame, title: str) -> go.Figure:
     """Distinct articles per matched entity type (FAMILY.TYPE), one colour per family, log scale."""
     if types.empty:
         return _empty_fig(height=360)
     types = types.sort_values("articles")
-    names = [TYPE_LABELS.get(t, t.replace("_", " ").capitalize()) for t in types["entity_type"].str.split(".").str[-1]]
+    names = [_type_label(t) for t in types["entity_type"]]
     fig = go.Figure()
     for family, color in FAMILY_COLORS.items():
         mask = (types["family"] == family).to_numpy()
@@ -173,6 +178,46 @@ def _build_entity_types(types: pd.DataFrame, title: str) -> go.Figure:
     _style(fig, title, max(360, len(types) * 26 + 110))
     fig.update_xaxes(type="log", title_text="Distinct articles (log scale)")
     fig.update_yaxes(showgrid=False, categoryorder="array", categoryarray=names)
+    return fig
+
+
+def _build_country_map(countries: pd.DataFrame, title: str, labels: int = 6) -> go.Figure:
+    """One bubble per country the news is about: size = distinct articles, colour = average score.
+
+    Bubbles sit on each country's centroid (ISO-3), and the busiest are labelled. Regions such as Global or Europe
+    are left off the map and counted in the title.
+    """
+    if countries.empty:
+        return _empty_fig(height=520)
+    mapped = countries[countries["iso3"].notna() & countries["sentiment_avg"].notna()].copy()
+    off_map = int(countries.loc[countries["iso3"].isna(), "articles"].sum())
+    if off_map:
+        title += f"  ·  {off_map:,} articles tagged a region (e.g. Global, Europe), not on the map"
+    if mapped.empty:
+        return _empty_fig("No country tags in the window", height=520)
+    mapped["types"] = mapped["top_entity_types"].apply(
+        lambda types: "<br>".join(f"{_type_label(t['entity_type'])}: {t['articles']:,}" for t in types) or "n/a")
+    limit = max(mapped["sentiment_avg"].abs().max(), 0.05)
+    # Short label for the busiest countries ("Iran, Islamic Republic of" → "Iran"); markers+text keeps it off the bubble
+    names = mapped["country"].str.split(",").str[0].str.replace("Russian Federation", "Russia")
+    text = [name if i < labels else "" for i, name in enumerate(names)]
+    fig = go.Figure(go.Scattergeo(
+        locations=mapped["iso3"], locationmode="ISO-3", mode="markers+text", text=text,
+        textposition="middle right", textfont=dict(size=11, color=INK),
+        customdata=mapped[["country", "articles", "sentiment_avg", "types"]],
+        hovertemplate="<b>%{customdata[0]}</b><br>%{customdata[1]:,} articles<br>Average %{customdata[2]:+.3f}"
+                      "<br><br>Linked by<br>%{customdata[3]}<extra></extra>",
+        marker=dict(size=7 + 34 * (mapped["articles"] / mapped["articles"].max()) ** 0.5,
+                    color=mapped["sentiment_avg"], colorscale="RdYlGn", cmin=-limit, cmax=limit,
+                    line=dict(width=0.8, color=PAGE), opacity=0.9,
+                    colorbar=dict(title=dict(text="Average<br>score", font=dict(color=MUTED)), len=0.7,
+                                  tickfont=dict(color=MUTED), outlinewidth=0)),
+    ))
+    _style(fig, title, 520, legend=False)
+    fig.update_geos(projection_type="natural earth", bgcolor=SURFACE, showframe=False,
+                    showland=True, landcolor="#232321", showocean=True, oceancolor="#151514",
+                    showcountries=True, countrycolor="#3a3a37", coastlinecolor="#3a3a37", lataxis_range=[-50, 80])
+    fig.update_layout(margin=dict(l=8, r=8, t=52, b=8))
     return fig
 
 
@@ -265,6 +310,7 @@ def update_content(ticker: str, horizon: str, n: int):
     mix = pd.DataFrame(fetch_json("/match-types", {"ticker": ticker, "hours": hours}) or [])
     topics = pd.DataFrame(fetch_json("/topics", {"ticker": ticker, "horizon": horizon, "hours": hours}) or [])
     types = pd.DataFrame(fetch_json("/entity-types", {"ticker": ticker, "hours": hours}) or [])
+    countries = pd.DataFrame(fetch_json("/countries", {"ticker": ticker, "horizon": horizon, "hours": hours}) or [])
     strongest = fetch_json("/headlines", {"ticker": ticker, "hours": 6, "sort": "strongest", "limit": 20}) or []
 
     cards = [_stat_card("Rows (window)", f"{int(mix['rows'].sum()):,}" if not mix.empty else "0"),
@@ -283,6 +329,7 @@ def update_content(ticker: str, horizon: str, n: int):
         _graph(_build_volume(bins, f"Rows per bin  ·  {label}")),
         _graph(_build_topics(topics, f"15 busiest topics  ·  {label}")),
         _graph(_build_entity_types(types, f"What linked the news to the commodity  ·  {ticker_label(ticker)}")),
+        _graph(_build_country_map(countries, f"Where the news is about  ·  {label}")),
         html.Div(
             [
                 html.H3("Strongest headlines, last 6 hours",

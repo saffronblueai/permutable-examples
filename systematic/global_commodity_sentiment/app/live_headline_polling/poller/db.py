@@ -8,11 +8,11 @@ from config import settings
 COLUMNS = [
     "row_key", "ticker", "match_type", "topic", "topic_probability",
     "short_term_sentiment_score", "medium_term_sentiment_score", "long_term_sentiment_score",
-    "matched_entity_types", "matched_entities",
+    "matched_entity_types", "matched_entities", "country",
     "headline", "link", "source_name", "processed_at", "fetched_at",
 ]
 # Added after the first release: setup_database adds them to an existing database
-ADDED_COLUMNS = ["matched_entity_types", "matched_entities"]
+ADDED_COLUMNS = ["matched_entity_types", "matched_entities", "country"]
 
 
 @contextmanager
@@ -41,6 +41,7 @@ def setup_database() -> None:
                 long_term_sentiment_score   REAL,
                 matched_entity_types        TEXT,
                 matched_entities            TEXT,
+                country                     TEXT,
                 headline                    TEXT,
                 link                        TEXT,
                 source_name                 TEXT,

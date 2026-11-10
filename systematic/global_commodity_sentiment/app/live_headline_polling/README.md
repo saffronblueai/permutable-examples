@@ -99,6 +99,7 @@ docker compose up --build
 | `GET` | `/topics` | Average score per topic, busiest first; `ticker`, `horizon`, `hours`, `limit` |
 | `GET` | `/match-types` | Rows, distinct articles and average score per horizon for each match type |
 | `GET` | `/entity-types` | Distinct articles per matched entity type (e.g. `PHYSICAL_ASSET.PROCESSING_FACILITY`); `ticker`, `hours`, `limit` |
+| `GET` | `/countries` | Distinct articles and average score per country the news is about, with its ISO-3 code and top entity types; `ticker`, `horizon`, `hours`, `limit` |
 
 ```bash
 curl "http://localhost:8000/match-types?ticker=BZ_COM"
@@ -116,6 +117,7 @@ curl "http://localhost:8000/headlines?ticker=BZ_COM&sort=strongest&limit=10"
 - **Rows per bin**, stacked by match type
 - **Topics:** the 15 busiest topics
 - **Entity types:** what linked the news to the commodity, as distinct articles per matched entity type, coloured by family (commodity, physical asset, location, policy instrument)
+- **Country map:** one bubble per country the news is about, sized by distinct articles and coloured by average score; hover for the entity types behind it. Regions such as Global or Europe are counted in the title rather than mapped
 - **Strongest headlines** of the last 6 hours, for drill-down
 
 ---

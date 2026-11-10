@@ -7,8 +7,15 @@ from config import settings
 from db import get_db
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from models import BinPoint, EntityTypeCount, Headline, HealthResponse, MatchTypeSummary, TopicSentiment
-from signals import HORIZON_COLUMNS, binned_series, entity_type_summary, match_type_summary, topic_summary
+from models import BinPoint, CountryCount, EntityTypeCount, Headline, HealthResponse, MatchTypeSummary, TopicSentiment
+from signals import (
+    HORIZON_COLUMNS,
+    binned_series,
+    country_summary,
+    entity_type_summary,
+    match_type_summary,
+    topic_summary,
+)
 
 app = FastAPI(
     title="Permutable AI  |  GCSI Headline Feed API",
@@ -158,5 +165,25 @@ def get_entity_types(
     summary = entity_type_summary(_load(hours, ticker)).head(limit)
     return [
         EntityTypeCount(entity_type=r.entity_type, family=r.family, articles=int(r.articles))
+        for r in summary.itertuples()
+    ]
+
+
+@app.get("/countries", response_model=list[CountryCount], tags=["Sentiment"])
+def get_countries(
+    ticker: Optional[str] = Query(None, description="Filter by ticker"),
+    horizon: str = HORIZON,
+    hours: int = Query(48, ge=1, le=720, description="Lookback window in hours"),
+    limit: int = Query(60, ge=1, le=300, description="Number of countries, most articles first"),
+):
+    """Distinct articles and average score per country the news is about, with the entity types behind them.
+
+    iso3 is null for regions, such as Global or Europe, which are not on the map.
+    """
+    _check(horizon)
+    summary = country_summary(_load(hours, ticker), horizon).head(limit)
+    return [
+        CountryCount(country=r.country, iso3=r.iso3, articles=int(r.articles),
+                     sentiment_avg=_clean(float(r.sentiment_avg)), top_entity_types=r.top_entity_types)
         for r in summary.itertuples()
     ]

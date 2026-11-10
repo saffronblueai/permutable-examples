@@ -140,7 +140,7 @@ The two apps use the same three-service architecture as the other products in th
 
 ![GCSI index dashboard](app/live_index_polling/dashboard.png)
 
-**[`app/live_headline_polling`](app/live_headline_polling/)** polls the headline feed for one commodity and builds its own 15-minute index by match type, with news volume and the busiest topics.
+**[`app/live_headline_polling`](app/live_headline_polling/)** polls the headline feed for one commodity and builds its own 15-minute index by match type, with news volume, the busiest topics, what linked the news to the commodity and a map of the countries it is about.
 
 ![GCSI headline dashboard](app/live_headline_polling/dashboard.png)
 

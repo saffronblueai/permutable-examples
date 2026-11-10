@@ -1,5 +1,8 @@
+from functools import cache
+
 import numpy as np
 import pandas as pd
+import pycountry
 from config import settings
 
 HORIZON_COLUMNS = {
@@ -86,4 +89,55 @@ def entity_type_summary(df: pd.DataFrame) -> pd.DataFrame:
     types = types[types["entity_type"] != ""]
     out = types.groupby("entity_type")["link"].nunique().rename("articles").reset_index()
     out["family"] = out["entity_type"].str.split(".").str[0]
+    return out[columns].sort_values("articles", ascending=False)
+
+
+# Feed names pycountry does not resolve; XKX is the code Plotly's maps use for Kosovo
+ISO3_ALIASES = {"Turkey": "TUR", "Kosovo": "XKX"}
+
+
+@cache
+def _iso3(name: str) -> str | None:
+    """ISO 3166 alpha-3 code for a feed country name, or None for regions such as Global or Europe."""
+    if name in ISO3_ALIASES:
+        return ISO3_ALIASES[name]
+    try:
+        return pycountry.countries.lookup(name).alpha_3
+    except LookupError:
+        return None
+
+
+def _split(frame: pd.DataFrame, column: str, keys: list[str]) -> pd.DataFrame:
+    """One row per `keys` and value of a |-separated column."""
+    out = frame.assign(**{column: frame[column].str.split("|")}).explode(column)
+    out[column] = out[column].str.strip()
+    return out[out[column].fillna("") != ""].drop_duplicates(keys + [column])
+
+
+def country_summary(df: pd.DataFrame, horizon: str, top_types: int = 3) -> pd.DataFrame:
+    """Distinct articles and average score per country the headlines are about, most first.
+
+    The feed repeats an article once per topic, so each article's score is averaged across its topics first.
+    top_entity_types lists the entity types that linked most of that country's articles to the commodity.
+    """
+    columns = ["country", "iso3", "articles", "sentiment_avg", "top_entity_types"]
+    if df.empty or "country" not in df or df["country"].isna().all():
+        return pd.DataFrame(columns=columns)
+    news = df.groupby("link", as_index=False).agg(
+        country=("country", "first"), matched_entity_types=("matched_entity_types", "first"),
+        score=(HORIZON_COLUMNS[horizon], "mean"),
+    )
+    by_country = _split(news.dropna(subset=["country"]), "country", ["link"])
+    out = by_country.groupby("country").agg(articles=("link", "nunique"), sentiment_avg=("score", "mean"))
+
+    types = _split(by_country.dropna(subset=["matched_entity_types"]), "matched_entity_types", ["link", "country"])
+    counts = types.groupby(["country", "matched_entity_types"])["link"].nunique().rename("articles").reset_index()
+    counts = counts.sort_values("articles", ascending=False).groupby("country").head(top_types)
+    out["top_entity_types"] = counts.groupby("country").apply(
+        lambda g: [{"entity_type": t, "articles": int(n)} for t, n in zip(g["matched_entity_types"], g["articles"])],
+        include_groups=False,
+    )
+    out["top_entity_types"] = out["top_entity_types"].apply(lambda v: v if isinstance(v, list) else [])
+    out = out.reset_index()
+    out["iso3"] = out["country"].map(_iso3)
     return out[columns].sort_values("articles", ascending=False)

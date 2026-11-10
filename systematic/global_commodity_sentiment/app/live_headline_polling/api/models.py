@@ -49,6 +49,19 @@ class EntityTypeCount(BaseModel):
     articles: int
 
 
+class EntityTypeArticles(BaseModel):
+    entity_type: str
+    articles: int
+
+
+class CountryCount(BaseModel):
+    country: str
+    iso3: str | None = None
+    articles: int
+    sentiment_avg: float | None
+    top_entity_types: list[EntityTypeArticles]
+
+
 class HealthResponse(BaseModel):
     status: str
     db_path: str
