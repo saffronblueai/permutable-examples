@@ -67,7 +67,7 @@ docker compose up --build
 | Topics | Volume-weighted average per topic: `Σ sentiment_sum / Σ headline_count` over the window. |
 | Revisions | The newest bars can be revised. Every poll upserts, and a restart re-fetches `REVISION_HOURS` behind the newest stored bar. |
 
-`processed_at` is the **end** of each hour (UTC), binned on when Permutable received the headline. The index response does not include `index_type` or `sentiment_type`; the poller writes both from the request.
+`processed_at` is the **end** of each hour (UTC), binned on when Permutable processed the headlines and made them available. The index response does not include `index_type` or `sentiment_type`; the poller writes both from the request.
 
 ---
 

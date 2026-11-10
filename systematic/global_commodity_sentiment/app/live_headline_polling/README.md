@@ -59,7 +59,7 @@ docker compose up --build
 | Step | Rule |
 |---|---|
 | Storage key | The feed has no row id. Each row is keyed on (ticker, topic, match type, link or headline, processed time), so overlapping polls and re-runs never duplicate rows. |
-| Bins | Built on **`processed_at`** (when Permutable received the headline) and labelled by their **end**, like the hourly index. The feed does not carry a publisher publication time. |
+| Bins | Built on **`processed_at`** (when Permutable processed the headline and made it available) and labelled by their **end**, like the hourly index. The feed does not carry a publisher publication time. |
 | Counts | One article can sit in several topics, so per-bin counts are rows (headline × topic). Within a ticker each headline has one match type, so articles add up across match types. |
 | Smoothing | `Σ sentiment_sum / Σ headline_count` over the last `SMOOTHING_HOURS`. Readings with fewer than `MIN_HEADLINES` rows, or inside the first window, are left empty. |
 | `sentiment_std` | Sample standard deviation per bin, 0 for a single headline (same convention as the index). |
@@ -93,11 +93,12 @@ docker compose up --build
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/health` | Status, row count and newest receipt time |
+| `GET` | `/health` | Status, row count and newest processed time |
 | `GET` | `/headlines` | Recent headlines; `ticker`, `match_type`, `hours`, `sort=recent|strongest`, `limit` |
 | `GET` | `/sentiment/bins` | Own index: binned and smoothed per match type; `ticker`, `match_type`, `horizon`, `hours` |
 | `GET` | `/topics` | Average score per topic, busiest first; `ticker`, `horizon`, `hours`, `limit` |
 | `GET` | `/match-types` | Rows, distinct articles and average score per horizon for each match type |
+| `GET` | `/entity-types` | Distinct articles per matched entity type (e.g. `PHYSICAL_ASSET.PROCESSING_FACILITY`); `ticker`, `hours`, `limit` |
 
 ```bash
 curl "http://localhost:8000/match-types?ticker=BZ_COM"
@@ -114,6 +115,7 @@ curl "http://localhost:8000/headlines?ticker=BZ_COM&sort=strongest&limit=10"
 - **Weighted average by match type**, from your own bins
 - **Rows per bin**, stacked by match type
 - **Topics:** the 15 busiest topics
+- **Entity types:** what linked the news to the commodity, as distinct articles per matched entity type, coloured by family (commodity, physical asset, location, policy instrument)
 - **Strongest headlines** of the last 6 hours, for drill-down
 
 ---

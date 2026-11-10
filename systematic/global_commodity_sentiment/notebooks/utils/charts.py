@@ -205,7 +205,7 @@ def own_index_by_match_type(own: pd.DataFrame, title: str, window: str = "6h") -
     hourly_volume = volume.resample("1h").sum()
     ax_vol.stackplot(hourly_volume.index, hourly_volume.T.to_numpy(), labels=hourly_volume.columns, alpha=0.75)
     ax_vol.set_ylabel("Topic-links per hour")
-    ax_vol.set_xlabel("Receipt time (UTC)")
+    ax_vol.set_xlabel("Processed time (UTC)")
     plt.tight_layout()
     plt.show()
 
@@ -319,7 +319,7 @@ def asset_timeline(hits: pd.DataFrame, title: str, neutral_band: float = 0.1) ->
     ax.set_yticklabels(counts.index)
     ax.grid(axis="y", color="#ececec")
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))
-    ax.set_xlabel("Receipt time (UTC)")
+    ax.set_xlabel("Processed time (UTC)")
     ax.legend(handles=[Patch(color=POSITIVE, label=f"Bullish (> {neutral_band})"),
                        Patch(color="#9e9e9e", label="Neutral"),
                        Patch(color=NEGATIVE, label=f"Bearish (< -{neutral_band})")],

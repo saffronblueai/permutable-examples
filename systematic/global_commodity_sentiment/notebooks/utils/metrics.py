@@ -32,8 +32,8 @@ def pool(frame: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
     return out.drop(columns="_sumsq")
 
 
-def receipt_date(processed_at: pd.Series) -> pd.Series:
-    """UTC date the headlines were received. A bar stamped 00:00 covers 23:00–24:00 of the previous day."""
+def processed_date(processed_at: pd.Series) -> pd.Series:
+    """UTC date the headlines were processed. A bar stamped 00:00 covers 23:00–24:00 of the previous day."""
     return (processed_at - pd.Timedelta(hours=1)).dt.floor("D").dt.tz_localize(None)
 
 
@@ -93,7 +93,7 @@ def add_indicator(frame: pd.DataFrame, mode: str = "percentile", upper_pct: floa
 
 
 def daily_topic_average(index_rows: pd.DataFrame, min_headlines: int = 5, top: int = 15) -> pd.DataFrame:
-    """Topic × receipt day average for the busiest topics; cells under `min_headlines` topic-links are blank."""
+    """Topic × processed day average for the busiest topics; cells under `min_headlines` topic-links are blank."""
     rows = index_rows.assign(day=(index_rows["processed_at"] - pd.Timedelta(hours=1)).dt.floor("D"))
     grid = rows.groupby(["topic_name", "day"])[["sentiment_sum", "headline_count"]].sum()
     avg = (grid["sentiment_sum"] / grid["headline_count"]).where(grid["headline_count"] >= min_headlines).unstack()

@@ -13,7 +13,7 @@ def binned_series(df: pd.DataFrame, horizon: str) -> pd.DataFrame:
     """
     Aggregate headlines into fixed bins per (ticker, match_type) and smooth them.
 
-    Bins are built on processed_at (when Permutable received the headline) and
+    Bins are built on processed_at (when Permutable processed the headline and made it available) and
     labelled by their END, matching the hourly index. The feed does not carry a
     publisher publication time.
 
@@ -69,3 +69,21 @@ def match_type_summary(df: pd.DataFrame) -> pd.DataFrame:
         **{f"avg_{h}": (column, "mean") for h, column in HORIZON_COLUMNS.items()},
     )
     return out.reset_index()
+
+
+def entity_type_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """Distinct articles per matched entity type, most first.
+
+    matched_entity_types is a |-separated list of FAMILY.TYPE values, e.g.
+    PHYSICAL_ASSET.PROCESSING_FACILITY, so each article counts once per type it names.
+    """
+    columns = ["entity_type", "family", "articles"]
+    if df.empty or "matched_entity_types" not in df:
+        return pd.DataFrame(columns=columns)
+    types = df[["link", "matched_entity_types"]].dropna()
+    types = types.assign(entity_type=types["matched_entity_types"].str.split("|")).explode("entity_type")
+    types["entity_type"] = types["entity_type"].str.strip()
+    types = types[types["entity_type"] != ""]
+    out = types.groupby("entity_type")["link"].nunique().rename("articles").reset_index()
+    out["family"] = out["entity_type"].str.split(".").str[0]
+    return out[columns].sort_values("articles", ascending=False)

@@ -8,8 +8,11 @@ from config import settings
 COLUMNS = [
     "row_key", "ticker", "match_type", "topic", "topic_probability",
     "short_term_sentiment_score", "medium_term_sentiment_score", "long_term_sentiment_score",
+    "matched_entity_types", "matched_entities",
     "headline", "link", "source_name", "processed_at", "fetched_at",
 ]
+# Added after the first release: setup_database adds them to an existing database
+ADDED_COLUMNS = ["matched_entity_types", "matched_entities"]
 
 
 @contextmanager
@@ -36,10 +39,12 @@ def setup_database() -> None:
                 short_term_sentiment_score  REAL,
                 medium_term_sentiment_score REAL,
                 long_term_sentiment_score   REAL,
+                matched_entity_types        TEXT,
+                matched_entities            TEXT,
                 headline                    TEXT,
                 link                        TEXT,
                 source_name                 TEXT,
-                processed_at             TEXT,
+                processed_at                TEXT,
                 fetched_at                  TEXT
             )
         """)
@@ -47,10 +52,14 @@ def setup_database() -> None:
             CREATE INDEX IF NOT EXISTS idx_gcsi_headlines_ticker_time
             ON gcsi_headlines (ticker, processed_at)
         """)
+        existing = {row[1] for row in conn.execute("PRAGMA table_info(gcsi_headlines)")}
+        for column in ADDED_COLUMNS:
+            if column not in existing:
+                conn.execute(f"ALTER TABLE gcsi_headlines ADD COLUMN {column} TEXT")
 
 
 def latest_processed_at(ticker: str) -> datetime | None:
-    """Newest stored receipt time for *ticker*, used to resume the backfill after a restart."""
+    """Newest stored processed time for *ticker*, used to resume the backfill after a restart."""
     with connection() as conn:
         row = conn.execute("SELECT MAX(processed_at) FROM gcsi_headlines WHERE ticker = ?", (ticker,)).fetchone()
     return datetime.fromisoformat(row[0]) if row and row[0] else None

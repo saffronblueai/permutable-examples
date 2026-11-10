@@ -7,8 +7,8 @@ from config import settings
 from db import get_db
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from models import BinPoint, Headline, HealthResponse, MatchTypeSummary, TopicSentiment
-from signals import HORIZON_COLUMNS, binned_series, match_type_summary, topic_summary
+from models import BinPoint, EntityTypeCount, Headline, HealthResponse, MatchTypeSummary, TopicSentiment
+from signals import HORIZON_COLUMNS, binned_series, entity_type_summary, match_type_summary, topic_summary
 
 app = FastAPI(
     title="Permutable AI  |  GCSI Headline Feed API",
@@ -61,7 +61,7 @@ def _clean(value: float) -> float | None:
 
 @app.get("/health", response_model=HealthResponse, tags=["Monitoring"])
 def health():
-    """Returns service status, the row count and the newest receipt time."""
+    """Returns service status, the row count and the newest processed time."""
     try:
         with get_db() as conn:
             count, latest = conn.execute("SELECT COUNT(*), MAX(processed_at) FROM gcsi_headlines").fetchone()
@@ -102,7 +102,7 @@ def get_bins(
     horizon: str = HORIZON,
     hours: int = Query(48, ge=1, le=720, description="Lookback window in hours"),
 ):
-    """Own index from the headline feed: BIN_MINUTES bins on receipt time, smoothed over SMOOTHING_HOURS."""
+    """Own index from the headline feed: BIN_MINUTES bins on processed time, smoothed over SMOOTHING_HOURS."""
     _check(horizon)
     series = binned_series(_load(hours, ticker, match_type), horizon)
     return [
@@ -144,5 +144,19 @@ def get_match_types(
             avg_short_term=_clean(float(r.avg_short_term)), avg_medium_term=_clean(float(r.avg_medium_term)),
             avg_long_term=_clean(float(r.avg_long_term)),
         )
+        for r in summary.itertuples()
+    ]
+
+
+@app.get("/entity-types", response_model=list[EntityTypeCount], tags=["Sentiment"])
+def get_entity_types(
+    ticker: Optional[str] = Query(None, description="Filter by ticker"),
+    hours: int = Query(48, ge=1, le=720, description="Lookback window in hours"),
+    limit: int = Query(15, ge=1, le=100, description="Number of entity types, most articles first"),
+):
+    """Distinct articles per matched entity type: what linked the news to the commodity."""
+    summary = entity_type_summary(_load(hours, ticker)).head(limit)
+    return [
+        EntityTypeCount(entity_type=r.entity_type, family=r.family, articles=int(r.articles))
         for r in summary.itertuples()
     ]

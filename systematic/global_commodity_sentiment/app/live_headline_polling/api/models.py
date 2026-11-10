@@ -43,6 +43,12 @@ class MatchTypeSummary(BaseModel):
     avg_long_term: float | None
 
 
+class EntityTypeCount(BaseModel):
+    entity_type: str
+    family: str
+    articles: int
+
+
 class HealthResponse(BaseModel):
     status: str
     db_path: str

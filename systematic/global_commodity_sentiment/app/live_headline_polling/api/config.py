@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     db_path: str = "/data/gcsi_headlines.db"
 
-    # Own aggregation: bins on processed_at (receipt), labelled by their end, like the hourly index.
+    # Own aggregation: bins on processed_at (when Permutable processed the headline), labelled by their end, like the hourly index.
     bin_minutes: int = 15
     smoothing_hours: int = 6
     min_headlines: int = 5  # fewer rows than this in the smoothing window → no reading

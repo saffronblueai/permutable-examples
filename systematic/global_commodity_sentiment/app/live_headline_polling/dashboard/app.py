@@ -21,6 +21,9 @@ FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif'
 MATCH_COLORS = {"EXPLICIT": "#3987e5", "RELATED_ENTITY": "#d95926", "MACROECONOMIC": "#199e70"}
 MATCH_ORDER = ["EXPLICIT", "RELATED_ENTITY", "MACROECONOMIC"]
 POSITIVE, NEGATIVE = "#0ca30c", "#d03b3b"
+FAMILY_COLORS = {"COMMODITY": "#3987e5", "PHYSICAL_ASSET": "#d95926", "LOCATION": "#199e70",
+                 "POLICY_INSTRUMENT": "#c98500"}
+TYPE_LABELS = {"LNG": "LNG", "LPG_NGL": "LPG / NGL", "FERROUS_METAL_STEEL": "Ferrous metal / steel"}
 
 HORIZONS = ["short_term", "medium_term", "long_term"]
 HORIZON_LABELS = {"short_term": "Short term", "medium_term": "Medium term", "long_term": "Long term"}
@@ -115,7 +118,7 @@ def _build_smoothed(bins: pd.DataFrame, title: str) -> go.Figure:
     _style(fig, title, 380)
     fig.update_layout(hovermode="x unified")
     fig.update_yaxes(title_text="Weighted average score")
-    fig.update_xaxes(title_text="Bin end, receipt time (UTC)")
+    fig.update_xaxes(title_text="Bin end, processed time (UTC)")
     return fig
 
 
@@ -130,7 +133,7 @@ def _build_volume(bins: pd.DataFrame, title: str) -> go.Figure:
     _style(fig, title, 280)
     fig.update_layout(barmode="stack", hovermode="x unified", barcornerradius=0)
     fig.update_yaxes(title_text="Rows (headline × topic)")
-    fig.update_xaxes(title_text="Bin end, receipt time (UTC)")
+    fig.update_xaxes(title_text="Bin end, processed time (UTC)")
     return fig
 
 
@@ -151,11 +154,33 @@ def _build_topics(topics: pd.DataFrame, title: str) -> go.Figure:
     return fig
 
 
+def _build_entity_types(types: pd.DataFrame, title: str) -> go.Figure:
+    """Distinct articles per matched entity type (FAMILY.TYPE), one colour per family, log scale."""
+    if types.empty:
+        return _empty_fig(height=360)
+    types = types.sort_values("articles")
+    names = [TYPE_LABELS.get(t, t.replace("_", " ").capitalize()) for t in types["entity_type"].str.split(".").str[-1]]
+    fig = go.Figure()
+    for family, color in FAMILY_COLORS.items():
+        mask = (types["family"] == family).to_numpy()
+        if not mask.any():
+            continue
+        fig.add_trace(go.Bar(
+            x=types["articles"][mask], y=[n for n, m in zip(names, mask) if m], orientation="h",
+            name=family.replace("_", " ").capitalize(), marker_color=color,
+            hovertemplate="%{y}<br>Articles: %{x:,}<extra></extra>",
+        ))
+    _style(fig, title, max(360, len(types) * 26 + 110))
+    fig.update_xaxes(type="log", title_text="Distinct articles (log scale)")
+    fig.update_yaxes(showgrid=False, categoryorder="array", categoryarray=names)
+    return fig
+
+
 def _headline_table(rows: list[dict], horizon: str) -> dash_table.DataTable:
     score = f"{horizon}_sentiment_score"
     data = [
         {
-            "received": pd.Timestamp(r["processed_at"]).strftime("%d %b %H:%M"),
+            "processed": pd.Timestamp(r["processed_at"]).strftime("%d %b %H:%M"),
             "match_type": r.get("match_type"),
             "topic": r.get("topic"),
             "score": round(r[score], 3) if r.get(score) is not None else None,
@@ -166,7 +191,7 @@ def _headline_table(rows: list[dict], horizon: str) -> dash_table.DataTable:
     ]
     return dash_table.DataTable(
         data=data,
-        columns=[{"name": c, "id": c} for c in ["received", "match_type", "topic", "score", "headline", "source"]],
+        columns=[{"name": c, "id": c} for c in ["processed", "match_type", "topic", "score", "headline", "source"]],
         style_as_list_view=True,
         style_header={"backgroundColor": SURFACE, "color": MUTED, "fontWeight": "600", "fontSize": "11px",
                       "textTransform": "uppercase", "letterSpacing": "0.06em", "borderBottom": BORDER},
@@ -239,6 +264,7 @@ def update_content(ticker: str, horizon: str, n: int):
 
     mix = pd.DataFrame(fetch_json("/match-types", {"ticker": ticker, "hours": hours}) or [])
     topics = pd.DataFrame(fetch_json("/topics", {"ticker": ticker, "horizon": horizon, "hours": hours}) or [])
+    types = pd.DataFrame(fetch_json("/entity-types", {"ticker": ticker, "hours": hours}) or [])
     strongest = fetch_json("/headlines", {"ticker": ticker, "hours": 6, "sort": "strongest", "limit": 20}) or []
 
     cards = [_stat_card("Rows (window)", f"{int(mix['rows'].sum()):,}" if not mix.empty else "0"),
@@ -256,6 +282,7 @@ def update_content(ticker: str, horizon: str, n: int):
         _graph(_build_smoothed(bins, f"Weighted average by match type (own bins)  ·  {label}")),
         _graph(_build_volume(bins, f"Rows per bin  ·  {label}")),
         _graph(_build_topics(topics, f"15 busiest topics  ·  {label}")),
+        _graph(_build_entity_types(types, f"What linked the news to the commodity  ·  {ticker_label(ticker)}")),
         html.Div(
             [
                 html.H3("Strongest headlines, last 6 hours",

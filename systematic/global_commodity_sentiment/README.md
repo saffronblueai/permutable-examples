@@ -53,7 +53,7 @@ One row per commodity × topic × index type × horizon × hour.
 | `ticker` | string | Commodity ticker, e.g. `BZ_COM` (Brent Crude) |
 | `topic_name` | string | Topic label, `Sector::L1::L2` (see the taxonomy) |
 | `topic_id` | string | Stable id for `topic_name` |
-| `processed_at` | timestamp, UTC | **End** of the hourly window. The window is chosen from the time Permutable *received* the headline. |
+| `processed_at` | timestamp, UTC | **End** of the hourly window. The window is chosen from the time Permutable *processed* the headline and made it available. |
 | `headline_count` | integer | Distinct articles in the window |
 | `sentiment_sum` | float | Sum of this horizon's scores |
 | `sentiment_abs_sum` | float | Sum of the absolute scores in the window |
@@ -73,7 +73,7 @@ One row per headline × commodity × topic.
 | `matched_entity_types`, `matched_entities` | What in the headline linked it to the commodity |
 | `topic`, `topic_probability` | Topic label (`Sector::L1::L2`) and the classifier's confidence (0–1) that the headline belongs to it. This is not a sentiment score. |
 | `short_term_sentiment_score`, `medium_term_sentiment_score`, `long_term_sentiment_score` | The three horizon scores, from −1 to +1 |
-| `processed_at` | UTC time Permutable received the headline |
+| `processed_at` | UTC time Permutable processed the headline and made it available through the API |
 
 The feed does not include a publisher publication time or a ticker name. The live route returns the last 24 hours as a plain list. The historical route is paginated, requires `start_date`, and covers at most 90 days.
 
@@ -87,7 +87,7 @@ These are the points most often got wrong when people first use the data. Every 
 
 | Topic | Rule |
 |---|---|
-| **Timestamps** | Index `processed_at` is the *end* of the hour, binned by the time Permutable received the headline. A bar stamped `10:00` covers headlines received from 09:00 to 10:00 and is known at 10:00. |
+| **Timestamps** | Index `processed_at` is the *end* of the hour, binned by the time Permutable processed the headline and made it available. A bar stamped `10:00` covers headlines processed from 09:00 to 10:00 and is available at 10:00. |
 | **Sparse output** | Hours with no headlines are omitted, not zero-filled. Reindex before computing rolling statistics on a regular clock. |
 | **Revisions** | The most recent hourly bars can be revised as late headlines arrive. Re-poll and upsert. Never treat the newest hour as final. |
 | **Index types** | Within a ticker, each headline gets one match type (priority `EXPLICIT`, then `RELATED_ENTITY`, then `MACROECONOMIC`), and `COMBINED` is their total. Use `COMBINED` for the full picture, or one of the three for a breakdown. Never add `COMBINED` to the others. |
@@ -96,8 +96,8 @@ These are the points most often got wrong when people first use the data. Every 
 | **Average sentiment** | `sentiment_avg = sentiment_sum / headline_count`, in [−1, +1] |
 | **Pooling `sentiment_std`** | Hourly standard deviations cannot be averaged. Rebuild the sum of squares as `(n − 1)·std² + n·mean²`, add those across hours, then recompute the standard deviation. See `pool` in [`notebooks/utils/metrics.py`](notebooks/utils/metrics.py). |
 | **Score scale** | Calibrate thresholds from the data for each commodity and horizon, using percentiles or z-scores, rather than fixed values. |
-| **Backfill timing** | Historical receipt times were reconstructed for the backfill period. Treat point-in-time accuracy before the live period as approximate, and allow a lag in research. |
-| **Backfilled scores** | History before the live period was scored after the fact by the current sentiment models, so research results on it are in-sample for those models. Only data received live shows what you would have seen at the time. |
+| **Backfill timing** | Historical `processed_at` times were reconstructed for the backfill period. Treat point-in-time accuracy before the live period as approximate, and allow a lag in research. |
+| **Backfilled scores** | History before the live period was scored after the fact by the current sentiment models, so research results on it are in-sample for those models. Only data processed live shows what you would have seen at the time. |
 
 ---
 
