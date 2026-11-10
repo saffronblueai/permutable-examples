@@ -206,8 +206,9 @@ Headlines are linked to a commodity as `EXPLICIT` (the commodity, its benchmarks
 | Notebook / app | What it shows |
 |---|---|
 | [`gcsi_quickstart.ipynb`](systematic/global_commodity_sentiment/notebooks/getting_started/gcsi_quickstart.ipynb) | First call and first chart: a week of Brent by horizon |
+| [`gcsi_infrastructure_watchlist.ipynb`](systematic/global_commodity_sentiment/notebooks/getting_started/gcsi_infrastructure_watchlist.ipynb) | A custom feed for named oil refineries, pipelines and storage sites: map, timeline and headline table |
 | [`gcsi_index_polling.ipynb`](systematic/global_commodity_sentiment/notebooks/live/gcsi_index_polling.ipynb) | Hourly index polling into SQLite, with a calibrated HIGH / NEUTRAL / LOW indicator |
-| [`gcsi_headline_polling.ipynb`](systematic/global_commodity_sentiment/notebooks/live/gcsi_headline_polling.ipynb) | Headline feed, match types and topic probability, with your own index on receipt time |
+| [`gcsi_headline_polling.ipynb`](systematic/global_commodity_sentiment/notebooks/live/gcsi_headline_polling.ipynb) | Headline feed, match types and topic probability, the entities and countries behind the news, and your own index on processed time |
 | [`app/live_index_polling`](systematic/global_commodity_sentiment/app/live_index_polling/) · [`app/live_headline_polling`](systematic/global_commodity_sentiment/app/live_headline_polling/) | `poller` / `api` / `dashboard` Docker apps |
 
 The [GCSI README](systematic/global_commodity_sentiment/README.md) covers the field dictionary and the rules for reading the data correctly: timestamps, sparse hours, revisions, multi-label topics and pooling.
