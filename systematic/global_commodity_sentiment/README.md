@@ -94,7 +94,7 @@ These are the points most often got wrong when people first use the data. Every 
 | **Topics are multi-label** | One headline can sit in several topics. Summing `headline_count` across topics gives *topic-links*, not articles. The sum is still a valid topic-weighted average, but label it that way. |
 | **Horizons** | Analyse one `sentiment_type` at a time. Never add horizons together. |
 | **Average sentiment** | `sentiment_avg = sentiment_sum / headline_count`, in [−1, +1] |
-| **Pooling `sentiment_std`** | Hourly standard deviations cannot be averaged. Rebuild the sum of squares as `(n − 1)·std² + n·mean²`, add those across hours, then recompute the standard deviation. See `pool` in the notebooks. |
+| **Pooling `sentiment_std`** | Hourly standard deviations cannot be averaged. Rebuild the sum of squares as `(n − 1)·std² + n·mean²`, add those across hours, then recompute the standard deviation. See `pool` in [`notebooks/utils/metrics.py`](notebooks/utils/metrics.py). |
 | **Score scale** | Calibrate thresholds from the data for each commodity and horizon, using percentiles or z-scores, rather than fixed values. |
 | **Backfill timing** | Historical receipt times were reconstructed for the backfill period. Treat point-in-time accuracy before the live period as approximate, and allow a lag in research. |
 | **Backfilled scores** | History before the live period was scored after the fact by the current sentiment models, so research results on it are in-sample for those models. Only data received live shows what you would have seen at the time. |
@@ -109,6 +109,7 @@ global_commodity_sentiment/
 ├── reference/
 │   └── gcsi_topics.csv              # Sector / L1 / L2 topic hierarchy with descriptions
 ├── notebooks/
+│   ├── utils/                       # Shared helpers: api, store (SQLite), metrics, charts
 │   ├── getting_started/
 │   │   ├── gcsi_quickstart.ipynb    # First call, first chart
 │   │   └── gcsi_infrastructure_watchlist.ipynb  # Named refineries and pipelines → map, timeline, feed
@@ -126,6 +127,8 @@ global_commodity_sentiment/
 | [`gcsi_infrastructure_watchlist`](notebooks/getting_started/gcsi_infrastructure_watchlist.ipynb) | API | A custom feed for a watchlist of named oil refineries, pipelines and storage sites, filtered with `matched_entity_type_preset`: map, timeline and headline table |
 | [`gcsi_index_polling`](notebooks/live/gcsi_index_polling.ipynb) | API | Live hourly index polling into SQLite, horizon and index-type breakdowns, and a calibrated HIGH / NEUTRAL / LOW indicator |
 | [`gcsi_headline_polling`](notebooks/live/gcsi_headline_polling.ipynb) | API | Headline feed with match types, topic-probability filtering, the matched entities, countries and sources behind the news, and your own 15-minute aggregation |
+
+The notebooks keep to configuration, analysis steps and explanation. The API client (retries and pagination), SQLite storage, metrics such as `pool` and `own_index`, and the chart code are in [`notebooks/utils`](notebooks/utils/), which every notebook imports.
 
 The notebooks are saved with their outputs from a run against the live API. Those runs set `SHOW_HEADLINE_TEXT=0`, so saved tables leave out headline text, links and publishers. Run the notebooks yourself to see them.
 
