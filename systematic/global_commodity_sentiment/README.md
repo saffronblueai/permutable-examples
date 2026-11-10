@@ -107,7 +107,7 @@ These are the points most often got wrong when people first use the data. Every 
 global_commodity_sentiment/
 ├── README.md                        # This file
 ├── reference/
-│   └── gcsi_topics.csv              # Sector / L1 / L2 topic hierarchy with descriptions
+│   └── gcsi_topics.csv              # Sector / L1 / L2 topic hierarchy
 ├── notebooks/
 │   ├── utils/                       # Shared helpers: api, store (SQLite), metrics, charts
 │   ├── getting_started/
@@ -161,7 +161,7 @@ jupyter notebook notebooks/getting_started/gcsi_quickstart.ipynb
 
 ## Taxonomy reference
 
-[`reference/gcsi_topics.csv`](reference/gcsi_topics.csv) lists every GCSI topic with its sector, L1 driver, L2 name and a short description.
+[`reference/gcsi_topics.csv`](reference/gcsi_topics.csv) lists every GCSI topic with its sector, L1 driver and L2 name.
 
 | Sector | L1 drivers | L2 topics |
 |---|---|---|
