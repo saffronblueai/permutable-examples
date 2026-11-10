@@ -1,0 +1,143 @@
+topic,sector,l1,l2
+Agriculture::Market::Prices,Agriculture,Market,Prices
+Agriculture::Market::Forecasts,Agriculture,Market,Forecasts
+Agriculture::Market::Market Structure,Agriculture,Market,Market Structure
+Agriculture::Market::Other,Agriculture,Market,Other
+Agriculture::Macro::Growth & Inflation,Agriculture,Macro,Growth & Inflation
+Agriculture::Macro::Currency & FX,Agriculture,Macro,Currency & FX
+Agriculture::Macro::Geopolitics & Conflict,Agriculture,Macro,Geopolitics & Conflict
+Agriculture::Macro::Policy & Regulation,Agriculture,Macro,Policy & Regulation
+Agriculture::Macro::Global Trade & Sanctions,Agriculture,Macro,Global Trade & Sanctions
+Agriculture::Macro::Biofuel Policy,Agriculture,Macro,Biofuel Policy
+Agriculture::Macro::Other,Agriculture,Macro,Other
+Agriculture::Supply::Crop Progress & Production,Agriculture,Supply,Crop Progress & Production
+Agriculture::Supply::Forestry Production,Agriculture,Supply,Forestry Production
+Agriculture::Supply::Livestock Production,Agriculture,Supply,Livestock Production
+Agriculture::Supply::Weather & Conditions,Agriculture,Supply,Weather & Conditions
+Agriculture::Supply::Disease & Biosecurity,Agriculture,Supply,Disease & Biosecurity
+Agriculture::Supply::Inventories & Reports,Agriculture,Supply,Inventories & Reports
+Agriculture::Supply::Logistics & Disruption,Agriculture,Supply,Logistics & Disruption
+Agriculture::Supply::Other,Agriculture,Supply,Other
+Agriculture::Demand::Global Import Demand,Agriculture,Demand,Global Import Demand
+Agriculture::Demand::Export Sales & Tenders,Agriculture,Demand,Export Sales & Tenders
+Agriculture::Demand::Trade Data & Flows,Agriculture,Demand,Trade Data & Flows
+Agriculture::Demand::Biofuel & Processing,Agriculture,Demand,Biofuel & Processing
+Agriculture::Demand::Feed & Livestock,Agriculture,Demand,Feed & Livestock
+Agriculture::Demand::Farm Input Demand,Agriculture,Demand,Farm Input Demand
+Agriculture::Demand::Consumer & Retail,Agriculture,Demand,Consumer & Retail
+Agriculture::Demand::Other,Agriculture,Demand,Other
+Agriculture::Corporate::Earnings,Agriculture,Corporate,Earnings
+Agriculture::Corporate::Deals,Agriculture,Corporate,Deals
+Agriculture::Corporate::Other,Agriculture,Corporate,Other
+Carbon::Market::Prices,Carbon,Market,Prices
+Carbon::Market::Forecasts,Carbon,Market,Forecasts
+Carbon::Market::Market Structure,Carbon,Market,Market Structure
+Carbon::Market::Other,Carbon,Market,Other
+Carbon::Macro::Climate Politics,Carbon,Macro,Climate Politics
+Carbon::Macro::Policy & Regulation,Carbon,Macro,Policy & Regulation
+Carbon::Macro::Other,Carbon,Macro,Other
+Carbon::Supply::Cap & Allocation,Carbon,Supply,Cap & Allocation
+Carbon::Supply::Auctions,Carbon,Supply,Auctions
+Carbon::Supply::Supply Adjustment,Carbon,Supply,Supply Adjustment
+Carbon::Supply::Offsets,Carbon,Supply,Offsets
+Carbon::Supply::Other,Carbon,Supply,Other
+Carbon::Demand::Compliance Demand,Carbon,Demand,Compliance Demand
+Carbon::Demand::Fuel Switching,Carbon,Demand,Fuel Switching
+Carbon::Demand::Industrial Activity,Carbon,Demand,Industrial Activity
+Carbon::Demand::Other,Carbon,Demand,Other
+Energy::Market::Prices,Energy,Market,Prices
+Energy::Market::Forecasts,Energy,Market,Forecasts
+Energy::Market::Market Structure,Energy,Market,Market Structure
+Energy::Market::Other,Energy,Market,Other
+Energy::Macro::Economy & Central Banks,Energy,Macro,Economy & Central Banks
+Energy::Macro::Geopolitics,Energy,Macro,Geopolitics
+Energy::Macro::Conflict,Energy,Macro,Conflict
+Energy::Macro::Policy & Regulation,Energy,Macro,Policy & Regulation
+Energy::Macro::Global Trade & Sanctions,Energy,Macro,Global Trade & Sanctions
+Energy::Macro::Producer Policy,Energy,Macro,Producer Policy
+Energy::Macro::Other,Energy,Macro,Other
+Energy::Supply::Drilling,Energy,Supply,Drilling
+Energy::Supply::Refining,Energy,Supply,Refining
+Energy::Supply::Disruptions,Energy,Supply,Disruptions
+Energy::Supply::Inventories & Reserves,Energy,Supply,Inventories & Reserves
+Energy::Supply::Infrastructure & Logistics,Energy,Supply,Infrastructure & Logistics
+Energy::Supply::Other,Energy,Supply,Other
+Energy::Demand::Global Consumption,Energy,Demand,Global Consumption
+Energy::Demand::Transportation,Energy,Demand,Transportation
+Energy::Demand::Industrial & Power,Energy,Demand,Industrial & Power
+Energy::Demand::Petrochemicals,Energy,Demand,Petrochemicals
+Energy::Demand::Weather,Energy,Demand,Weather
+Energy::Demand::Other,Energy,Demand,Other
+Energy::Corporate::Earnings,Energy,Corporate,Earnings
+Energy::Corporate::Deals,Energy,Corporate,Deals
+Energy::Corporate::Other,Energy,Corporate,Other
+Freight::Market::Rates,Freight,Market,Rates
+Freight::Market::Forecasts,Freight,Market,Forecasts
+Freight::Market::Market Structure,Freight,Market,Market Structure
+Freight::Market::Other,Freight,Market,Other
+Freight::Macro::Global Trade & Tariffs,Freight,Macro,Global Trade & Tariffs
+Freight::Macro::Geopolitics & Conflict,Freight,Macro,Geopolitics & Conflict
+Freight::Macro::Policy & Regulation,Freight,Macro,Policy & Regulation
+Freight::Macro::Other,Freight,Macro,Other
+Freight::Supply::Fleet,Freight,Supply,Fleet
+Freight::Supply::Bunkers,Freight,Supply,Bunkers
+Freight::Supply::Insurance Costs,Freight,Supply,Insurance Costs
+Freight::Supply::Ports & Routes,Freight,Supply,Ports & Routes
+Freight::Supply::Other,Freight,Supply,Other
+Freight::Demand::Cargo Demand,Freight,Demand,Cargo Demand
+Freight::Demand::Chartering,Freight,Demand,Chartering
+Freight::Demand::Other,Freight,Demand,Other
+Freight::Corporate::Earnings,Freight,Corporate,Earnings
+Freight::Corporate::Deals,Freight,Corporate,Deals
+Freight::Corporate::Other,Freight,Corporate,Other
+Metals::Market::Prices,Metals,Market,Prices
+Metals::Market::Forecasts,Metals,Market,Forecasts
+Metals::Market::Market Structure,Metals,Market,Market Structure
+Metals::Market::Other,Metals,Market,Other
+Metals::Macro::Central Banking & Interest Rates,Metals,Macro,Central Banking & Interest Rates
+Metals::Macro::Growth & Inflation,Metals,Macro,Growth & Inflation
+Metals::Macro::Stimulus,Metals,Macro,Stimulus
+Metals::Macro::Currency & FX,Metals,Macro,Currency & FX
+Metals::Macro::Geopolitics & Conflict,Metals,Macro,Geopolitics & Conflict
+Metals::Macro::Policy & Regulation,Metals,Macro,Policy & Regulation
+Metals::Macro::Global Trade & Sanctions,Metals,Macro,Global Trade & Sanctions
+Metals::Macro::Other,Metals,Macro,Other
+Metals::Supply::Mine Production,Metals,Supply,Mine Production
+Metals::Supply::Processing & Refining,Metals,Supply,Processing & Refining
+Metals::Supply::Scrap,Metals,Supply,Scrap
+Metals::Supply::Inventories & Flows,Metals,Supply,Inventories & Flows
+Metals::Supply::Disruptions & Logistics,Metals,Supply,Disruptions & Logistics
+Metals::Supply::Other,Metals,Supply,Other
+Metals::Demand::Industrial & Infrastructure,Metals,Demand,Industrial & Infrastructure
+Metals::Demand::Transport & Green Tech,Metals,Demand,Transport & Green Tech
+Metals::Demand::Jewelry & Retail,Metals,Demand,Jewelry & Retail
+Metals::Demand::Investment Demand,Metals,Demand,Investment Demand
+Metals::Demand::Power Sector,Metals,Demand,Power Sector
+Metals::Demand::Other,Metals,Demand,Other
+Metals::Corporate::Earnings,Metals,Corporate,Earnings
+Metals::Corporate::Deals,Metals,Corporate,Deals
+Metals::Corporate::Other,Metals,Corporate,Other
+Power::Market::Prices,Power,Market,Prices
+Power::Market::Forecasts,Power,Market,Forecasts
+Power::Market::Market Structure,Power,Market,Market Structure
+Power::Market::Other,Power,Market,Other
+Power::Macro::Growth,Power,Macro,Growth
+Power::Macro::Political Intervention,Power,Macro,Political Intervention
+Power::Macro::Policy & Regulation,Power,Macro,Policy & Regulation
+Power::Macro::Other,Power,Macro,Other
+Power::Supply::Thermal Generation,Power,Supply,Thermal Generation
+Power::Supply::Renewables,Power,Supply,Renewables
+Power::Supply::Nuclear,Power,Supply,Nuclear
+Power::Supply::Hydro,Power,Supply,Hydro
+Power::Supply::Disruptions,Power,Supply,Disruptions
+Power::Supply::Grid,Power,Supply,Grid
+Power::Supply::Capacity,Power,Supply,Capacity
+Power::Supply::Fuel & Carbon Costs,Power,Supply,Fuel & Carbon Costs
+Power::Supply::Other,Power,Supply,Other
+Power::Demand::Load,Power,Demand,Load
+Power::Demand::Weather,Power,Demand,Weather
+Power::Demand::Electrification,Power,Demand,Electrification
+Power::Demand::Other,Power,Demand,Other
+Power::Corporate::Earnings,Power,Corporate,Earnings
+Power::Corporate::Deals,Power,Corporate,Deals
+Power::Corporate::Other,Power,Corporate,Other

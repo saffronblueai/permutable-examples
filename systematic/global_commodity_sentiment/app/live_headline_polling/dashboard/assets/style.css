@@ -1,0 +1,42 @@
+/* Dark styling for the dcc.Dropdown controls (Dash serves everything in assets/ automatically). */
+.filter .Select-control {
+    background: #1a1a19;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 8px;
+    color: #f0efec;
+}
+.filter .Select-control:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+.filter .is-focused:not(.is-open) > .Select-control {
+    border-color: #3987e5;
+    box-shadow: none;
+}
+.filter .Select-value-label,
+.filter .Select-placeholder,
+.filter .Select-input > input {
+    color: #f0efec !important;
+}
+.filter .Select-arrow {
+    border-top-color: #898781;
+}
+.filter .Select-menu-outer {
+    background: #1a1a19;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 0 0 8px 8px;
+}
+.filter .Select-option,
+.filter .VirtualizedSelectOption {
+    background: #1a1a19;
+    color: #c3c2b7;
+}
+.filter .Select-option.is-focused,
+.filter .VirtualizedSelectFocusedOption {
+    background: #262624;
+    color: #f0efec;
+}
+.filter .Select-option.is-selected,
+.filter .VirtualizedSelectSelectedOption {
+    color: #f0efec;
+    font-weight: 600;
+}
