@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 from config import settings
-from db import latest_extraction_time, upsert_index
+from db import latest_processed_at, upsert_index
 from fetcher import fetch_historical_index
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ def _start_date_for(ticker: str, index_type: str, sentiment_type: str) -> date:
       bar (REVISION_HOURS) so bars revised while the poller was down are refreshed.
     - Otherwise fall back to now − BACKFILL_DAYS for a fresh seed.
     """
-    latest = latest_extraction_time(ticker, index_type, sentiment_type)
+    latest = latest_processed_at(ticker, index_type, sentiment_type)
     if latest is not None:
         start = (latest - timedelta(hours=settings.revision_hours)).date()
         logger.info("    DB has data up to %s; resuming from %s", latest.isoformat(), start)

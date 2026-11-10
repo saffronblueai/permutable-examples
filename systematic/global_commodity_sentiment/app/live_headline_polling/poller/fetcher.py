@@ -50,14 +50,14 @@ def _stamp(records: list[dict], ticker: str) -> list[dict]:
     Normalise records in place.
 
     The feed has no row id, so each row gets a key built from (ticker, topic,
-    match type, link or headline, extraction time); polling the same window
+    match type, link or headline, processed time); polling the same window
     twice is then harmless. Timestamps are stored as ISO UTC strings.
     """
     fetched_at = datetime.now(timezone.utc).isoformat()
     for record in records:
         record.setdefault("ticker", ticker)
-        record["extraction_time"] = _utc_iso(record.get("extraction_time"))
-        parts = [record.get(k) or "" for k in ("ticker", "topic", "match_type", "extraction_time")]
+        record["processed_at"] = _utc_iso(record.get("processed_at"))
+        parts = [record.get(k) or "" for k in ("ticker", "topic", "match_type", "processed_at")]
         parts.append(record.get("link") or record.get("headline") or "")
         record["row_key"] = hashlib.sha1("|".join(map(str, parts)).encode()).hexdigest()
         record["fetched_at"] = fetched_at

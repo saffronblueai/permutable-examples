@@ -14,7 +14,7 @@ class Headline(BaseModel):
     headline: str | None = None
     link: str | None = None
     source_name: str | None = None
-    extraction_time: datetime | None = None
+    processed_at: datetime | None = None
 
 
 class BinPoint(BaseModel):
@@ -47,4 +47,4 @@ class HealthResponse(BaseModel):
     status: str
     db_path: str
     row_count: int | None = None
-    latest_extraction_time: datetime | None = None
+    latest_processed_at: datetime | None = None

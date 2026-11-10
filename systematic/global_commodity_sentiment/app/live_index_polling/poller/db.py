@@ -6,7 +6,7 @@ from typing import Generator
 from config import settings
 
 COLUMNS = [
-    "ticker", "topic_name", "topic_id", "index_type", "sentiment_type", "extraction_time",
+    "ticker", "topic_name", "topic_id", "index_type", "sentiment_type", "processed_at",
     "headline_count", "sentiment_sum", "sentiment_abs_sum", "sentiment_std", "fetched_at",
 ]
 
@@ -32,22 +32,22 @@ def setup_database() -> None:
                 topic_id          TEXT,
                 index_type        TEXT NOT NULL,
                 sentiment_type    TEXT NOT NULL,
-                extraction_time   TEXT NOT NULL,
+                processed_at   TEXT NOT NULL,
                 headline_count    INTEGER,
                 sentiment_sum     REAL,
                 sentiment_abs_sum REAL,
                 sentiment_std     REAL,
                 fetched_at        TEXT,
-                PRIMARY KEY (ticker, topic_name, index_type, sentiment_type, extraction_time)
+                PRIMARY KEY (ticker, topic_name, index_type, sentiment_type, processed_at)
             )
         """)
         conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_gcsi_ticker_time
-            ON gcsi_index (ticker, sentiment_type, index_type, extraction_time)
+            ON gcsi_index (ticker, sentiment_type, index_type, processed_at)
         """)
 
 
-def latest_extraction_time(ticker: str, index_type: str, sentiment_type: str) -> datetime | None:
+def latest_processed_at(ticker: str, index_type: str, sentiment_type: str) -> datetime | None:
     """
     Return the newest stored bar for one series, or None if it has no rows yet.
 
@@ -56,7 +56,7 @@ def latest_extraction_time(ticker: str, index_type: str, sentiment_type: str) ->
     """
     with connection() as conn:
         row = conn.execute(
-            "SELECT MAX(extraction_time) FROM gcsi_index WHERE ticker = ? AND index_type = ? AND sentiment_type = ?",
+            "SELECT MAX(processed_at) FROM gcsi_index WHERE ticker = ? AND index_type = ? AND sentiment_type = ?",
             (ticker, index_type, sentiment_type),
         ).fetchone()
     return datetime.fromisoformat(row[0]) if row and row[0] else None

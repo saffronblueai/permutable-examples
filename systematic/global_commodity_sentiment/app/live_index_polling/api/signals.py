@@ -8,7 +8,7 @@ def ticker_series(df: pd.DataFrame) -> pd.DataFrame:
     Derive a smoothed, topic-weighted sentiment series per (ticker, sentiment_type, index_type).
 
     Steps:
-    1. Parse extraction_time to UTC-aware datetime.
+    1. Parse processed_at to UTC-aware datetime.
     2. Add topic rows together per hour. Topics are multi-label, so the count is
        topic-links and the average is topic-weighted.
     3. sentiment_avg = sentiment_sum / headline_count per hour.
@@ -21,23 +21,23 @@ def ticker_series(df: pd.DataFrame) -> pd.DataFrame:
         return df
 
     df = df.copy()
-    df["extraction_time"] = pd.to_datetime(df["extraction_time"], utc=True)
+    df["processed_at"] = pd.to_datetime(df["processed_at"], utc=True)
     keys = ["ticker", "sentiment_type", "index_type"]
     hourly = (
-        df.groupby([*keys, "extraction_time"], as_index=False)[["headline_count", "sentiment_sum"]]
+        df.groupby([*keys, "processed_at"], as_index=False)[["headline_count", "sentiment_sum"]]
         .sum()
-        .sort_values("extraction_time")
+        .sort_values("processed_at")
     )
     window = f"{settings.smoothing_hours}h"
     out = []
     for _, group in hourly.groupby(keys):
-        rolled = group.set_index("extraction_time")[["headline_count", "sentiment_sum"]].rolling(window).sum()
+        rolled = group.set_index("processed_at")[["headline_count", "sentiment_sum"]].rolling(window).sum()
         group = group.assign(
             sentiment_avg=group["sentiment_sum"] / group["headline_count"],
             window_count=rolled["headline_count"].to_numpy(),
             sentiment_smooth=(rolled["sentiment_sum"] / rolled["headline_count"]).to_numpy(),
         )
-        warm_up = group["extraction_time"] < group["extraction_time"].min() + pd.Timedelta(window)
+        warm_up = group["processed_at"] < group["processed_at"].min() + pd.Timedelta(window)
         group.loc[(group["window_count"] < settings.min_headlines) | warm_up, "sentiment_smooth"] = np.nan
         out.append(group)
     return pd.concat(out, ignore_index=True)

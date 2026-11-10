@@ -48,8 +48,8 @@ def fetch_json(path: str, params: dict | None = None) -> list | dict | None:
 
 def fetch_frame(path: str, params: dict) -> pd.DataFrame:
     df = pd.DataFrame(fetch_json(path, params) or [])
-    if not df.empty and "extraction_time" in df:
-        df["extraction_time"] = pd.to_datetime(df["extraction_time"], utc=True)
+    if not df.empty and "processed_at" in df:
+        df["processed_at"] = pd.to_datetime(df["processed_at"], utc=True)
     return df
 
 
@@ -120,13 +120,13 @@ def _build_sentiment_ts(series: pd.DataFrame, tickers: list[str], title: str) ->
         if sub.empty:
             continue
         name, color = ticker_label(ticker), ticker_color(ticker)
-        fig.add_trace(go.Scatter(x=sub["extraction_time"], y=sub["sentiment_smooth"], mode="lines", name=name,
+        fig.add_trace(go.Scatter(x=sub["processed_at"], y=sub["sentiment_smooth"], mode="lines", name=name,
                                  line=dict(color=color, width=2),
                                  hovertemplate=f"{name} ({ticker}): %{{y:+.3f}}<extra></extra>"))
         if len(tickers) > 1:
             # Label each line at its last point, so identity does not rest on colour alone.
             last = sub.iloc[-1]
-            fig.add_trace(go.Scatter(x=[last["extraction_time"]], y=[last["sentiment_smooth"]], mode="markers+text",
+            fig.add_trace(go.Scatter(x=[last["processed_at"]], y=[last["sentiment_smooth"]], mode="markers+text",
                                      marker=dict(color=color, size=8, line=dict(color=SURFACE, width=2)),
                                      text=[name], textposition="middle right", textfont=dict(color=INK_2, size=11),
                                      cliponaxis=False, showlegend=False, hoverinfo="skip"))
@@ -151,7 +151,7 @@ def _build_volume(series: pd.DataFrame, tickers: list[str], title: str) -> go.Fi
     for ticker in tickers:
         sub = series[series["ticker"] == ticker]
         name = ticker_label(ticker)
-        fig.add_trace(go.Bar(x=sub["extraction_time"], y=sub["headline_count"], name=name,
+        fig.add_trace(go.Bar(x=sub["processed_at"], y=sub["headline_count"], name=name,
                              marker_color=ticker_color(ticker),
                              hovertemplate=f"{name}: %{{y:,}}<extra></extra>"))
     _style(fig, title, 280)
@@ -167,7 +167,7 @@ def _build_indicator_heatmap(series: pd.DataFrame, tickers: list[str], title: st
     codes = {"LOW": -1, "NEUTRAL": 0, "HIGH": 1}
     pivot = (
         series.assign(code=series["indicator"].map(codes))
-        .pivot_table(index="ticker", columns="extraction_time", values="code", aggfunc="last")
+        .pivot_table(index="ticker", columns="processed_at", values="code", aggfunc="last")
         .reindex([t for t in tickers if t in set(series["ticker"])])
     )
     states = pivot.apply(lambda col: col.map({v: k for k, v in codes.items()})).fillna("No reading")
@@ -192,7 +192,7 @@ def _build_horizons(frames: dict[str, pd.DataFrame], ticker: str, title: str) ->
         sub = frame[frame["ticker"] == ticker] if not frame.empty else frame
         if sub.empty:
             continue
-        fig.add_trace(go.Scatter(x=sub["extraction_time"], y=sub["sentiment_smooth"], mode="lines",
+        fig.add_trace(go.Scatter(x=sub["processed_at"], y=sub["sentiment_smooth"], mode="lines",
                                  line=dict(color=HORIZON_COLORS[horizon], width=2), name=HORIZON_LABELS[horizon],
                                  hovertemplate=f"{HORIZON_LABELS[horizon]}: %{{y:+.3f}}<extra></extra>"))
     if not fig.data:
@@ -286,8 +286,8 @@ def update_content(selected: str, horizon: str, index_type: str, n: int):
 
     tickers = [t for t in settings.tickers_list if t in set(series["ticker"])] if ticker is None else [ticker]
     scope = "All commodities" if ticker is None else ticker_label(ticker)
-    newest = series["extraction_time"].max()
-    last_day = series[series["extraction_time"] > newest - pd.Timedelta(hours=24)]
+    newest = series["processed_at"].max()
+    last_day = series[series["processed_at"] > newest - pd.Timedelta(hours=24)]
 
     stat_row = html.Div(
         [

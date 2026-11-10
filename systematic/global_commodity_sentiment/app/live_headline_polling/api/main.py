@@ -33,7 +33,7 @@ HORIZON = Query("short_term", description="short_term | medium_term | long_term"
 
 def _load(hours: int, ticker: Optional[str] = None, match_type: Optional[str] = None) -> pd.DataFrame:
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
-    query = "SELECT * FROM gcsi_headlines WHERE extraction_time >= ? AND topic_probability >= ?"
+    query = "SELECT * FROM gcsi_headlines WHERE processed_at >= ? AND topic_probability >= ?"
     params: list = [since, settings.min_topic_probability]
     if ticker:
         query += " AND ticker = ?"
@@ -64,8 +64,8 @@ def health():
     """Returns service status, the row count and the newest receipt time."""
     try:
         with get_db() as conn:
-            count, latest = conn.execute("SELECT COUNT(*), MAX(extraction_time) FROM gcsi_headlines").fetchone()
-        return HealthResponse(status="ok", db_path=settings.db_path, row_count=count, latest_extraction_time=latest)
+            count, latest = conn.execute("SELECT COUNT(*), MAX(processed_at) FROM gcsi_headlines").fetchone()
+        return HealthResponse(status="ok", db_path=settings.db_path, row_count=count, latest_processed_at=latest)
     except Exception:
         return HealthResponse(status="ok", db_path=settings.db_path)
 
@@ -88,7 +88,7 @@ def get_headlines(
         df = df.reindex(df["short_term_sentiment_score"].abs().sort_values(ascending=False).index)
         df = df.drop_duplicates(subset=["ticker", "link"])
     else:
-        df = df.sort_values("extraction_time", ascending=False)
+        df = df.sort_values("processed_at", ascending=False)
     top = df.head(limit)
     return top.astype(object).where(top.notna(), None).to_dict("records")
 

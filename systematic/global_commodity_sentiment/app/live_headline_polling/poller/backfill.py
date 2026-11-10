@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 from config import settings
-from db import latest_extraction_time, upsert_headlines
+from db import latest_processed_at, upsert_headlines
 from fetcher import fetch_historical_feed
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ def _start_date_for(ticker: str) -> date:
     - If the DB already has rows, resume from the day of the newest stored row.
     - Otherwise fall back to now − BACKFILL_DAYS for a fresh seed.
     """
-    latest = latest_extraction_time(ticker)
+    latest = latest_processed_at(ticker)
     if latest is not None:
         logger.info("    DB has data up to %s; resuming from that day", latest.isoformat())
         return latest.date()

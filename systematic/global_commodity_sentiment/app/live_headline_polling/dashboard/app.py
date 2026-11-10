@@ -155,7 +155,7 @@ def _headline_table(rows: list[dict], horizon: str) -> dash_table.DataTable:
     score = f"{horizon}_sentiment_score"
     data = [
         {
-            "received": pd.Timestamp(r["extraction_time"]).strftime("%d %b %H:%M"),
+            "received": pd.Timestamp(r["processed_at"]).strftime("%d %b %H:%M"),
             "match_type": r.get("match_type"),
             "topic": r.get("topic"),
             "score": round(r[score], 3) if r.get(score) is not None else None,

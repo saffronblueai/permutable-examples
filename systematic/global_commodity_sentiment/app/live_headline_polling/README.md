@@ -58,8 +58,8 @@ docker compose up --build
 
 | Step | Rule |
 |---|---|
-| Storage key | The feed has no row id. Each row is keyed on (ticker, topic, match type, link or headline, extraction time), so overlapping polls and re-runs never duplicate rows. |
-| Bins | Built on **`extraction_time`** (when Permutable received the headline) and labelled by their **end**, like the hourly index. The feed does not carry a publisher publication time. |
+| Storage key | The feed has no row id. Each row is keyed on (ticker, topic, match type, link or headline, processed time), so overlapping polls and re-runs never duplicate rows. |
+| Bins | Built on **`processed_at`** (when Permutable received the headline) and labelled by their **end**, like the hourly index. The feed does not carry a publisher publication time. |
 | Counts | One article can sit in several topics, so per-bin counts are rows (headline × topic). Within a ticker each headline has one match type, so articles add up across match types. |
 | Smoothing | `Σ sentiment_sum / Σ headline_count` over the last `SMOOTHING_HOURS`. Readings with fewer than `MIN_HEADLINES` rows, or inside the first window, are left empty. |
 | `sentiment_std` | Sample standard deviation per bin, 0 for a single headline (same convention as the index). |

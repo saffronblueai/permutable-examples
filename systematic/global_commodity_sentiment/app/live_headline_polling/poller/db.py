@@ -8,7 +8,7 @@ from config import settings
 COLUMNS = [
     "row_key", "ticker", "match_type", "topic", "topic_probability",
     "short_term_sentiment_score", "medium_term_sentiment_score", "long_term_sentiment_score",
-    "headline", "link", "source_name", "extraction_time", "fetched_at",
+    "headline", "link", "source_name", "processed_at", "fetched_at",
 ]
 
 
@@ -39,20 +39,20 @@ def setup_database() -> None:
                 headline                    TEXT,
                 link                        TEXT,
                 source_name                 TEXT,
-                extraction_time             TEXT,
+                processed_at             TEXT,
                 fetched_at                  TEXT
             )
         """)
         conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_gcsi_headlines_ticker_time
-            ON gcsi_headlines (ticker, extraction_time)
+            ON gcsi_headlines (ticker, processed_at)
         """)
 
 
-def latest_extraction_time(ticker: str) -> datetime | None:
+def latest_processed_at(ticker: str) -> datetime | None:
     """Newest stored receipt time for *ticker*, used to resume the backfill after a restart."""
     with connection() as conn:
-        row = conn.execute("SELECT MAX(extraction_time) FROM gcsi_headlines WHERE ticker = ?", (ticker,)).fetchone()
+        row = conn.execute("SELECT MAX(processed_at) FROM gcsi_headlines WHERE ticker = ?", (ticker,)).fetchone()
     return datetime.fromisoformat(row[0]) if row and row[0] else None
 
 

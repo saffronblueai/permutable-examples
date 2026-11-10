@@ -40,7 +40,7 @@ def _stamp(records: list[dict], ticker: str, index_type: str, sentiment_type: st
     Normalise records in place.
 
     The index row does not repeat the requested index type or horizon, so both
-    are written from the request. extraction_time is stored as an ISO UTC string
+    are written from the request. processed_at is stored as an ISO UTC string
     so string comparisons in SQLite order correctly.
     """
     fetched_at = datetime.now(timezone.utc).isoformat()
@@ -48,10 +48,10 @@ def _stamp(records: list[dict], ticker: str, index_type: str, sentiment_type: st
         record["ticker"] = record.get("ticker") or ticker
         record["index_type"] = index_type
         record["sentiment_type"] = sentiment_type
-        extracted = datetime.fromisoformat(str(record["extraction_time"]).replace("Z", "+00:00"))
+        extracted = datetime.fromisoformat(str(record["processed_at"]).replace("Z", "+00:00"))
         if extracted.tzinfo is None:
             extracted = extracted.replace(tzinfo=timezone.utc)
-        record["extraction_time"] = extracted.astimezone(timezone.utc).isoformat()
+        record["processed_at"] = extracted.astimezone(timezone.utc).isoformat()
         record["fetched_at"] = fetched_at
     return records
 

@@ -12,7 +12,7 @@ class IndexRecord(BaseModel):
     topic_id: str | None = None
     index_type: str
     sentiment_type: str
-    extraction_time: datetime
+    processed_at: datetime
     headline_count: int | None = None
     sentiment_sum: float | None = None
     sentiment_abs_sum: float | None = None
@@ -23,7 +23,7 @@ class SentimentPoint(BaseModel):
     ticker: str
     sentiment_type: str
     index_type: str
-    extraction_time: datetime
+    processed_at: datetime
     headline_count: int
     sentiment_avg: float
     sentiment_smooth: float | None
@@ -47,4 +47,4 @@ class HealthResponse(BaseModel):
     status: str
     db_path: str
     row_count: int | None = None
-    latest_extraction_time: datetime | None = None
+    latest_processed_at: datetime | None = None

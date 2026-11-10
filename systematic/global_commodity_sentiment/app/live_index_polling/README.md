@@ -67,7 +67,7 @@ docker compose up --build
 | Topics | Volume-weighted average per topic: `Σ sentiment_sum / Σ headline_count` over the window. |
 | Revisions | The newest bars can be revised. Every poll upserts, and a restart re-fetches `REVISION_HOURS` behind the newest stored bar. |
 
-`extraction_time` is the **end** of each hour (UTC), binned on when Permutable received the headline. The index response does not include `index_type` or `sentiment_type`; the poller writes both from the request.
+`processed_at` is the **end** of each hour (UTC), binned on when Permutable received the headline. The index response does not include `index_type` or `sentiment_type`; the poller writes both from the request.
 
 ---
 
@@ -134,7 +134,7 @@ curl "http://localhost:8000/topics?ticker=BZ_COM&hours=48"
 
 ## Going further
 
-Deployment patterns (a single VM, ECS/Fargate, Kubernetes CronJob, Airflow, PostgreSQL instead of SQLite) are the same as for the other apps in this repository. See [`headline_asset_sentiment/app/live_index_polling/README.md`](../../../headline_asset_sentiment/app/live_index_polling/README.md#going-further). For PostgreSQL, the upsert key here is `(ticker, topic_name, index_type, sentiment_type, extraction_time)`.
+Deployment patterns (a single VM, ECS/Fargate, Kubernetes CronJob, Airflow, PostgreSQL instead of SQLite) are the same as for the other apps in this repository. See [`headline_asset_sentiment/app/live_index_polling/README.md`](../../../headline_asset_sentiment/app/live_index_polling/README.md#going-further). For PostgreSQL, the upsert key here is `(ticker, topic_name, index_type, sentiment_type, processed_at)`.
 
 ---
 

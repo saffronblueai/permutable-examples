@@ -36,7 +36,7 @@ def _since(hours: int) -> str:
 
 
 def _load(hours: int, sentiment_type: str, index_type: str, ticker: Optional[str] = None) -> pd.DataFrame:
-    query = "SELECT * FROM gcsi_index WHERE extraction_time >= ? AND sentiment_type = ? AND index_type = ?"
+    query = "SELECT * FROM gcsi_index WHERE processed_at >= ? AND sentiment_type = ? AND index_type = ?"
     params: list = [_since(hours), sentiment_type, index_type]
     if ticker:
         query += " AND ticker = ?"
@@ -55,7 +55,7 @@ def _series(hours: int, sentiment_type: str, index_type: str, ticker: Optional[s
         return df
     series = ticker_series(df)
     series = add_indicator(series, thresholds(series))
-    return series[series["extraction_time"] >= pd.Timestamp(_since(hours))]
+    return series[series["processed_at"] >= pd.Timestamp(_since(hours))]
 
 
 def _clean(value):
@@ -67,7 +67,7 @@ def _point(row) -> dict:
         "ticker": row.ticker,
         "sentiment_type": row.sentiment_type,
         "index_type": row.index_type,
-        "extraction_time": row.extraction_time,
+        "processed_at": row.processed_at,
         "headline_count": int(row.headline_count),
         "sentiment_avg": round(float(row.sentiment_avg), 4),
         "sentiment_smooth": _clean(round(float(row.sentiment_smooth), 4)),
@@ -85,8 +85,8 @@ def health():
     """Returns service status, the row count and the newest stored bar."""
     try:
         with get_db() as conn:
-            count, latest = conn.execute("SELECT COUNT(*), MAX(extraction_time) FROM gcsi_index").fetchone()
-        return HealthResponse(status="ok", db_path=settings.db_path, row_count=count, latest_extraction_time=latest)
+            count, latest = conn.execute("SELECT COUNT(*), MAX(processed_at) FROM gcsi_index").fetchone()
+        return HealthResponse(status="ok", db_path=settings.db_path, row_count=count, latest_processed_at=latest)
     except Exception:
         return HealthResponse(status="ok", db_path=settings.db_path)
 
@@ -105,15 +105,15 @@ def get_index(
     Return stored hourly index rows, newest first.
 
     Each row is one (ticker, topic, index_type, sentiment_type, hour) bar.
-    extraction_time is the END of the hour (UTC).
+    processed_at is the END of the hour (UTC).
     """
-    query = "SELECT * FROM gcsi_index WHERE extraction_time >= ?"
+    query = "SELECT * FROM gcsi_index WHERE processed_at >= ?"
     params: list = [_since(hours)]
     for column, value in (("ticker", ticker), ("sentiment_type", sentiment_type), ("index_type", index_type)):
         if value:
             query += f" AND {column} = ?"
             params.append(value)
-    query += " ORDER BY extraction_time DESC LIMIT ?"
+    query += " ORDER BY processed_at DESC LIMIT ?"
     params.append(limit)
     try:
         with get_db() as conn:
@@ -137,7 +137,7 @@ def get_latest_sentiment(sentiment_type: str = SENTIMENT_TYPE, index_type: str =
     if series.empty:
         return []
     now = datetime.now(timezone.utc)
-    latest = series.sort_values("extraction_time").groupby("ticker").tail(1)
+    latest = series.sort_values("processed_at").groupby("ticker").tail(1)
     return sorted(
         (TickerSentiment(**_point(row), computed_at=now) for row in latest.itertuples()),
         key=lambda item: item.ticker,
@@ -153,7 +153,7 @@ def get_sentiment_history(
 ):
     """Hourly smoothed sentiment series with indicator, suitable for charting."""
     series = _series(hours, sentiment_type, index_type, ticker)
-    return [SentimentPoint(**_point(row)) for row in series.sort_values("extraction_time").itertuples()]
+    return [SentimentPoint(**_point(row)) for row in series.sort_values("processed_at").itertuples()]
 
 
 @app.get("/topics", response_model=list[TopicSentiment], tags=["Sentiment"])

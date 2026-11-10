@@ -13,7 +13,7 @@ def binned_series(df: pd.DataFrame, horizon: str) -> pd.DataFrame:
     """
     Aggregate headlines into fixed bins per (ticker, match_type) and smooth them.
 
-    Bins are built on extraction_time (when Permutable received the headline) and
+    Bins are built on processed_at (when Permutable received the headline) and
     labelled by their END, matching the hourly index. The feed does not carry a
     publisher publication time.
 
@@ -25,8 +25,8 @@ def binned_series(df: pd.DataFrame, horizon: str) -> pd.DataFrame:
     score = HORIZON_COLUMNS[horizon]
     freq = f"{settings.bin_minutes}min"
     df = df.copy()
-    df["extraction_time"] = pd.to_datetime(df["extraction_time"], utc=True, format="ISO8601")
-    df["bin_end"] = df["extraction_time"].dt.floor(freq) + pd.Timedelta(freq)
+    df["processed_at"] = pd.to_datetime(df["processed_at"], utc=True, format="ISO8601")
+    df["bin_end"] = df["processed_at"].dt.floor(freq) + pd.Timedelta(freq)
     bins = (
         df.groupby(["ticker", "match_type", "bin_end"])[score]
         .agg(headline_count="size", sentiment_sum="sum", sentiment_std="std")
