@@ -209,3 +209,4 @@ __marimo__/
 *.db
 *.zip
 *.csv
+!systematic/global_commodity_sentiment/reference/gcsi_topics.csv
